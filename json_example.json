@@ -1,0 +1,28 @@
+{
+    "type":"ResponseTransactionMessage",
+    "content":{
+        "id":1,
+        "transaction":{
+            "sender":"MIIBCgKCAQEAq64hxdxJtS7eB+Ej/rpjpaojdMZxydQY1/eymFC4zljzqwfhGKI5PBgy0mM45CiIN0zVdW2QUg6AzMk9hCOiwdzXocRKjpru4707lbZCXnXmxMS4+co3/duwDxTxmgayY+5C0STl2j1lnjeEPABVq1PtYCXJesc8wmaUYfjtU/TfZXUep0U1SBQ9VlKobQ12d/pV3bpgfLh99ifPN+wRpfKseKsitu27346YtqXOnr0kuTSP5u9ZjYbHkE4M72Djdp0+3GYap1jJcOSOKTD1lL/oCiDMEMwACugtlQYySI7D2Oy9B+gwNn5JzMd0iaRt3I+IZWID0hbOaaeu4fcqBQIDAQAB",
+            "message":"hello!",
+            "transfer":12.0,
+            "signature":"kZxbvaagFDKhE0f/yTzTjYUHU1N7jau4TZJP0/CT4irmdTP1ECTzjU/TOO8YIuc5b3jFQ5SvkrG4ZyDoGr23mkahDIOFuQv7G6K3aGDjRuPeUucQj0/mZXHIDg9ng42Mk8THKntLfmFzF/mtBmOWJooRUGNSeH0DVpxByKz3xNhvIab2P/4sirZZpS+wbexCucumWykOCoHASNqAXtU7cFrvnvouUx2+Bt0L/kxOYVVUTFsYWuj/x6nQIX622I7mqpPeMTw/UyJMCXA7UB4sJJ/dkaOKpBvNGj9xEvDdVmOhjOz14ROFFsBWJQCZx89VM5HLqe5KGzzXzeRV81oIdQ"
+        },
+        "time_stamp":"2024-12-14T17:23:03.990123200Z"
+    }
+}
+
+
+{
+    "type":"ResponseTransactionMessage",
+    "content":{
+        "id":0,
+        "timestamp":"2024-12-15T18:15:33.8582184+04:00",
+        "transaction":{
+            "sender":"MIIBCgKCAQEAw4gZIjQT0Fzgr7JwuEXbK1aoKIL2BfjTtHs5/HRi7roNSlGVVXdQfenB/LYcNDIn1xTWQL9O7v6jkSUEbfh/7/r+YM2AfF/dkASe3QfGn9uDC9iMev5X6I2iv/WV8zndA5yB8hgKl5+5F2zwyefHXtgl5H5OgWTiMqDD8e4PGh99e0SDcqLjLn4tSucN/E3dVz5T+IaC7gAsSGw7rboPYqBvnOa2qJxm1uCoMZ6zrGnwbf8NFP14grcsFYm8BytQ9NnlJ2KLi9UbYa8z+vXJdIlt+Dm7GKXs4Q26QghlBbKRZ4JY6rYgFxnN4qYdJ5+4apnpZ90Gfg1CzLNhsHwj7QIDAQAB",
+            "message":{"id":3,"buyOrder":{"id":10,"userLogin":"roman","walletId":3,"cryptocurrencyCode":"BTC","cardId":2,"typeName":"Покупка","statusName":"Используется в сделке","unitPrice":150.75,"quantity":3,"description":"Созданная сделка для контрагента","createdAt":"2024-11-23T01:17:14.506902","lastStatusChange":"2024-11-23T01:17:14.575606"},"sellOrder":{"id":2,"userLogin":"roman","walletId":3,"cryptocurrencyCode":"BTC","cardId":2,"typeName":"Покупка","statusName":"Используется в сделке","unitPrice":150.75,"quantity":3,"description":"Purchase of cryptocurrency","createdAt":"2024-11-17T14:30","lastStatusChange":"2024-11-23T01:24:28.737834"},"statusName":"Подтверждение сделки","createdAt":"2024-11-23T01:17:14.632595","lastStatusChange":"2024-11-23T01:17:14.632595"},
+            "transfer":452.25,
+            "signature":"L9z4QMtD3LnF8aHSGPp3uc61EqqK7CjgLyRwK7VdQxEl2LJ+Yizv0fy68k3SkIighueg0R9nU6URPEze4fCDZXhbC0meSvC5cC2XqBpfBZm3izqzgazBHj901g1qRzbi0++M43Z9jaSNGuxoEeGC2ryjZwDQVJauOv+yoZgW5I0M+MjyN/Y4ogBy0cuyzYKR1aVt3RZ5VlPhYq2nWXOTJmjO+s1snpYeQCMYCXRd2ATY+zMIwNePrKOcU2cmSZetV3Trjlu0OYPVUl3KWtNvtnwDc6Ft8THXCHfa3OT8nbGpEJG+HiK4PhSuL+w4c3EftDVGOSICFAkNbgxA2B4TAw"
+        }
+    }
+}
