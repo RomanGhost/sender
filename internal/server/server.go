@@ -35,6 +35,10 @@ func New(address string, port int, sender chan message.Message) *BlockchainServe
 	}
 }
 
+func (bs *BlockchainServer) GetProtocol() *p2pprotocol.P2PProtocol {
+	return bs.P2PProtocol
+}
+
 func (bs *BlockchainServer) Run() {
 	listenerAddress := fmt.Sprintf("%s:%d", bs.Address, bs.Port)
 	listener, err := net.Listen("tcp", listenerAddress)

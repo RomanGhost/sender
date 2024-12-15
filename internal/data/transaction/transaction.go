@@ -13,10 +13,10 @@ import (
 )
 
 type Transaction struct {
-	Sender    string     `json:"sender"`
-	Message   *deal.Deal `json:"message"`
-	Transfer  float64    `json:"transfer"`
-	Signature string     `json:"signature"`
+	Sender    string  `json:"sender"`
+	Message   string  `json:"message"` //*deal.Deal `json:"message"`//TODO(Решить что делать с полем сообщения)
+	Transfer  float64 `json:"transfer"`
+	Signature string  `json:"signature"`
 	wallet    *wallet.Wallet
 }
 
@@ -29,7 +29,7 @@ func New(walletKeys *wallet.Wallet, deal *deal.Deal) (*Transaction, error) {
 
 	return &Transaction{
 		Sender:    serializeWallet.PublicKey,
-		Message:   deal,
+		Message:   "Deal", //deal,
 		Transfer:  transfer,
 		Signature: "",
 		wallet:    walletKeys,
@@ -43,7 +43,8 @@ func (t *Transaction) Sign() error {
 	}
 
 	// Format the data to sign (Sender, Message, Transfer)
-	dataToSign := fmt.Sprintf("%s:%s:%f", t.Sender, t.Message, t.Transfer)
+	dataToSign := fmt.Sprintf("%s:%s:%v", t.Sender, t.Message, t.Transfer)
+	// fmt.Println("Transaction data:", dataToSign)
 	messageBytes := []byte(dataToSign)
 
 	// Hash the data
@@ -70,7 +71,7 @@ func (t *Transaction) Verify(publicKey *rsa.PublicKey) (bool, error) {
 	}
 
 	// Format the data to verify (Sender, Message, Transfer)
-	dataToVerify := fmt.Sprintf("%s:%s:%f", t.Sender, t.Message, t.Transfer)
+	dataToVerify := fmt.Sprintf("%s:%s:%v", t.Sender, t.Message, t.Transfer)
 	messageBytes := []byte(dataToVerify)
 
 	// Hash the data

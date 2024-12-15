@@ -3,8 +3,12 @@ package main
 import (
 	"fmt"
 	"sender/internal/data/deal"
+	"sender/internal/data/transaction"
+	"sender/internal/data/wallet"
 	"sender/internal/p2pprotocol/message"
+	"sender/internal/p2pprotocol/message/responce"
 	"sender/internal/server"
+	"time"
 )
 
 func getDeal() *deal.Deal {
@@ -52,20 +56,23 @@ func getDeal() *deal.Deal {
 }
 
 func main() {
-	// newWallet := wallet.New()
-	// newDeal := getDeal()
+	newWallet := wallet.New()
+	newDeal := getDeal()
 
-	// newTransaction, _ := transaction.New(newWallet, newDeal)
-	// newTransaction.Sign()
+	newTransaction, _ := transaction.New(newWallet, newDeal)
+	newTransaction.Sign()
 
-	// transactionMessage := responce.NewTransactionMessage(newTransaction)
-	// genericMessage := message.NewGenericMessage(transactionMessage)
-	// jsonText, _ := genericMessage.ToJSON()
-	// fmt.Println(string(jsonText))
+	transactionMessage := responce.NewTransactionMessage(newTransaction)
+
 	channel := make(chan message.Message)
 	server := server.New("localhost", 8080, channel)
 	go server.Run()
 	server.Connect("localhost", 7878)
+
+	p2pProtocol := server.GetProtocol()
+
+	time.Sleep(5 * time.Second) // Останавливает выполнение main на 30 секунд
+	p2pProtocol.Broadcast(transactionMessage, false)
 	fmt.Println("Код успешно завершается!")
 
 }

@@ -26,3 +26,18 @@
         }
     }
 }
+
+
+{
+    "type":"ResponseTransactionMessage",
+    "content":{
+        "id":1,
+        "timestamp":"2024-12-16T00:20:05.735096+04:00",
+        "transaction":{
+            "sender":"MIIBCgKCAQEAs24b2abNJJZHw/Y8k/TTvc4AQc5oRB++1COjz+t9XFFwFjHWF4Ydl5FHlvEWoVApDa9DkfhsFo+baRlbMVNrmqWfi5/PbygK7bHtRO8OzZSojGJHOnTZamTMANTXQ4rWvucweR5819L7ABkza4UI6EtQJCiRK8fqCI7ItwJECMKUNwyTf6jJtOm6sn3EhRk9gErFXe9zcVznEk7uEm/T+ILrJU/SWN8he9by6O70bc3kuXPBc6vt7g/grChiNweIzBqlrwYxazQUSJkDmFgLE5UnemgXwpwUmtQrCuA1HFST5gPUh5le9wDfXjJtZWD3CVs5MWcHuNsrbRaIO2uZUwIDAQAB",
+            "message":{"id":3,"buyOrder":{"id":10,"userLogin":"roman","walletId":3,"cryptocurrencyCode":"BTC","cardId":2,"typeName":"Покупка","statusName":"Используется в сделке","unitPrice":150.75,"quantity":3,"description":"Созданная сделка для контрагента","createdAt":"2024-11-23T01:17:14.506902","lastStatusChange":"2024-11-23T01:17:14.575606"},"sellOrder":{"id":2,"userLogin":"roman","walletId":3,"cryptocurrencyCode":"BTC","cardId":2,"typeName":"Покупка","statusName":"Используется в сделке","unitPrice":150.75,"quantity":3,"description":"Purchase of cryptocurrency","createdAt":"2024-11-17T14:30","lastStatusChange":"2024-11-23T01:24:28.737834"},"statusName":"Подтверждение сделки","createdAt":"2024-11-23T01:17:14.632595","lastStatusChange":"2024-11-23T01:17:14.632595"},
+            "transfer":452.25,
+            "signature":"CuF8vEikmUSiZaMrzW2TuIwED4l6v+odluxyH2w8JtrJCXDR9fDYy9yuPP8Eogjp4XxyIot2CydO7JAbWEdUpigRn/dyGZ5tPL4e48IQTO7p1FVCVI8BSRHFoEySSkpgyJZGZYVQs0Gp4GnjQ0brXFLB0JQUVzQPCUhIIfCPIjftWImoJj16ZB6jZlkYUrUWiwsgoMUUcIrnpOVqL1npyCxcIpJ3hVYF9XfugnWjKvRwlWGmlizJK6ko9Vt7r44YZtmCTdt5tgqhDrnS/vNfYVzcEE1k6ni/+8gQ8Ux3Tz2edfROiyteJdaQ1M2EdBIgI7i7KK2biclPyAqzbDdLow"
+        }
+    }
+}

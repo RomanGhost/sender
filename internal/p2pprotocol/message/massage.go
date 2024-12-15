@@ -38,7 +38,7 @@ func FromJSON(jsonByte []byte) (*GenericMessage, error) {
 // Базовая структура для хранения ID и временной метки
 type BaseMessage struct {
 	ID        uint64    `json:"id"`
-	Timestamp time.Time `json:"timestamp"`
+	Timestamp time.Time `json:"time_stamp"`
 }
 
 func (m *BaseMessage) GetID() uint64 {
