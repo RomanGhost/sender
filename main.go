@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"sender/internal/data/blockchain/transaction"
+	"sender/internal/data/blockchain/wallet"
 	"sender/internal/data/deal"
-	"sender/internal/data/transaction"
-	"sender/internal/data/wallet"
 	"sender/internal/p2pprotocol/message"
 	"sender/internal/p2pprotocol/message/responce"
 	"sender/internal/server"
@@ -61,7 +61,6 @@ func main() {
 
 	newTransaction, _ := transaction.New(newWallet, newDeal)
 	newTransaction.Sign()
-
 	transactionMessage := responce.NewTransactionMessage(newTransaction)
 
 	channel := make(chan message.Message)
@@ -73,6 +72,9 @@ func main() {
 
 	time.Sleep(5 * time.Second) // Останавливает выполнение main на 30 секунд
 	p2pProtocol.Broadcast(transactionMessage, false)
-	fmt.Println("Код успешно завершается!")
 
+	time.Sleep(290 * time.Second)
+	fmt.Println("Код успешно завершается!")
+	for {
+	}
 }

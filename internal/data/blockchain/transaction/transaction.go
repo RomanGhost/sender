@@ -7,17 +7,18 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"sender/internal/data/blockchain/wallet"
 	"sender/internal/data/deal"
-	"sender/internal/data/wallet"
 	"sender/internal/jsonutil"
 )
 
 type Transaction struct {
-	Sender    string  `json:"sender"`
-	Message   string  `json:"message"` //*deal.Deal `json:"message"`//TODO(Решить что делать с полем сообщения)
-	Transfer  float64 `json:"transfer"`
-	Signature string  `json:"signature"`
-	wallet    *wallet.Wallet
+	Sender      string  `json:"sender"`
+	DealMessage string  `json:"message"` //*deal.Deal `json:"message"`//TODO(Решить что делать с полем сообщения)
+	Transfer    float64 `json:"transfer"`
+	Signature   string  `json:"signature"`
+	wallet      *wallet.Wallet
+	deal        *deal.Deal
 }
 
 // New creates a new transaction and initializes it with data
@@ -26,13 +27,16 @@ func New(walletKeys *wallet.Wallet, deal *deal.Deal) (*Transaction, error) {
 
 	// Calculate transfer amount
 	transfer := deal.BuyOrder.Quantity * deal.BuyOrder.UnitPrice
+	jsonData, _ := deal.ToJson()
+	dataString := string(jsonData)
 
 	return &Transaction{
-		Sender:    serializeWallet.PublicKey,
-		Message:   "Deal", //deal,
-		Transfer:  transfer,
-		Signature: "",
-		wallet:    walletKeys,
+		Sender:      serializeWallet.PublicKey,
+		DealMessage: dataString, //deal,
+		Transfer:    transfer,
+		Signature:   "",
+		wallet:      walletKeys,
+		deal:        deal,
 	}, nil
 }
 
@@ -43,8 +47,7 @@ func (t *Transaction) Sign() error {
 	}
 
 	// Format the data to sign (Sender, Message, Transfer)
-	dataToSign := fmt.Sprintf("%s:%s:%v", t.Sender, t.Message, t.Transfer)
-	// fmt.Println("Transaction data:", dataToSign)
+	dataToSign := fmt.Sprintf("%s:%s:%v", t.Sender, t.DealMessage, t.Transfer)
 	messageBytes := []byte(dataToSign)
 
 	// Hash the data
@@ -71,7 +74,7 @@ func (t *Transaction) Verify(publicKey *rsa.PublicKey) (bool, error) {
 	}
 
 	// Format the data to verify (Sender, Message, Transfer)
-	dataToVerify := fmt.Sprintf("%s:%s:%v", t.Sender, t.Message, t.Transfer)
+	dataToVerify := fmt.Sprintf("%s:%s:%v", t.Sender, t.DealMessage, t.Transfer)
 	messageBytes := []byte(dataToVerify)
 
 	// Hash the data
@@ -99,6 +102,10 @@ func (t *Transaction) ToJson() ([]byte, error) {
 	return jsonutil.ToJSON(t)
 }
 
+func (t *Transaction) GetDeal() *deal.Deal {
+	return t.deal
+}
+
 // FromJson deserializes a transaction from JSON
 func FromJson(jsonData []byte) (*Transaction, error) {
 	var transaction Transaction
@@ -106,5 +113,11 @@ func FromJson(jsonData []byte) (*Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Вычленение сделки из поля сообщения
+	dealJsonString := transaction.DealMessage
+	dealFromJson, _ := deal.FromJson([]byte(dealJsonString))
+	transaction.deal = dealFromJson
+
 	return &transaction, nil
 }
