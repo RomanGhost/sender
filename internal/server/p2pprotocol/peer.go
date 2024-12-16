@@ -1,21 +1,20 @@
 package p2pprotocol
 
 import (
-	"encoding/json"
 	"log"
-	"sender/internal/p2pprotocol/message"
 	"sender/internal/server/connectionpool"
+	"sender/internal/server/p2pprotocol/message"
 	"sync"
 )
 
 type P2PProtocol struct {
 	connectionPool *connectionpool.ConnectionPool
 	lastMessageID  uint64
-	sender         chan message.Message
+	sender         chan message.GenericMessage
 	mu             sync.Mutex
 }
 
-func New(connectionPool *connectionpool.ConnectionPool, sender chan message.Message) *P2PProtocol {
+func New(connectionPool *connectionpool.ConnectionPool, sender chan message.GenericMessage) *P2PProtocol {
 	return &P2PProtocol{
 		connectionPool: connectionPool,
 		lastMessageID:  0,
@@ -24,27 +23,15 @@ func New(connectionPool *connectionpool.ConnectionPool, sender chan message.Mess
 }
 
 func (p *P2PProtocol) HandleMessage(messageJSON string) {
-	var genericMessage message.GenericMessage
-	messageBase := genericMessage.Content
-	err := json.Unmarshal([]byte(messageJSON), &messageBase)
+	genericMessage, err := message.FromJSON([]byte(messageJSON))
 	if err != nil {
 		log.Println("Failed to deserialize message:", err)
 		return
 	}
 
-	if messageBase.GetID() <= p.lastMessageID {
-		return
-	}
-
-	p.lastMessageID = messageBase.GetID()
-
-	// Пример обработки конкретного типа сообщения.
-	if messageBase.GetID() == 0 {
-		log.Println("Processing RequestMessageInfo")
-	}
 	// Отправка сообщения в канал.
-	p.sender <- messageBase
-	p.Broadcast(messageBase, true)
+	p.sender <- *genericMessage
+	p.Broadcast(genericMessage.Content, true)
 }
 
 // func (p *P2PProtocol) ResponseFirstMessage() {

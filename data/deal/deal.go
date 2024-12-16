@@ -1,7 +1,7 @@
 package deal
 
 import (
-	"sender/internal/data/order"
+	"sender/data/order"
 	"sender/internal/jsonutil"
 )
 

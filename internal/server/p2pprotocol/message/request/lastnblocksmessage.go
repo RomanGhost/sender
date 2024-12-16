@@ -1,7 +1,7 @@
 package request
 
 import (
-	"sender/internal/p2pprotocol/message"
+	"sender/internal/server/p2pprotocol/message"
 	"time"
 )
 

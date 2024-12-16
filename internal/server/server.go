@@ -7,9 +7,9 @@ import (
 	"net"
 	"time"
 
-	"sender/internal/p2pprotocol"
-	"sender/internal/p2pprotocol/message"
 	"sender/internal/server/connectionpool"
+	"sender/internal/server/p2pprotocol"
+	"sender/internal/server/p2pprotocol/message"
 )
 
 const HandshakeMessage = "NEW_CONNECT!\r\n"
@@ -23,7 +23,7 @@ type BlockchainServer struct {
 	P2PProtocol    *p2pprotocol.P2PProtocol
 }
 
-func New(address string, port int, sender chan message.Message) *BlockchainServer {
+func New(address string, port int, sender chan message.GenericMessage) *BlockchainServer {
 	connectionPool := connectionpool.New(BufferSize)
 	p2pProtocol := p2pprotocol.New(connectionPool, sender)
 
@@ -144,7 +144,8 @@ func (bs *BlockchainServer) handleConnection(conn net.Conn) {
 			}
 			accumulatedData = remainingData
 			log.Printf("Received message from %s: %s", peerAddress, message)
-			// Processing logic for the message would go here
+			// message proccessing
+			bs.P2PProtocol.HandleMessage(message)
 		}
 	}
 }

@@ -7,8 +7,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"sender/internal/data/blockchain/wallet"
-	"sender/internal/data/deal"
+	"sender/data/blockchain/wallet"
+	"sender/data/deal"
 	"sender/internal/jsonutil"
 )
 

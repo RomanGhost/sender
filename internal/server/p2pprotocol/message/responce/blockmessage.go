@@ -1,8 +1,8 @@
 package responce
 
 import (
-	"sender/internal/data/blockchain/block"
-	"sender/internal/p2pprotocol/message"
+	"sender/data/blockchain/block"
+	"sender/internal/server/p2pprotocol/message"
 	"time"
 )
 

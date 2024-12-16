@@ -1,7 +1,7 @@
 package block
 
 import (
-	"sender/internal/data/blockchain/transaction"
+	"sender/data/blockchain/transaction"
 	"sender/internal/jsonutil"
 	"time"
 )

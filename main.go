@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"sender/internal/data/blockchain/transaction"
-	"sender/internal/data/blockchain/wallet"
-	"sender/internal/data/deal"
-	"sender/internal/p2pprotocol/message"
-	"sender/internal/p2pprotocol/message/responce"
+	"sender/data/blockchain/transaction"
+	"sender/data/blockchain/wallet"
+	"sender/data/deal"
 	"sender/internal/server"
+	"sender/internal/server/p2pprotocol/message"
+	"sender/internal/server/p2pprotocol/message/responce"
 	"time"
 )
 
@@ -63,14 +63,14 @@ func main() {
 	newTransaction.Sign()
 	transactionMessage := responce.NewTransactionMessage(newTransaction)
 
-	channel := make(chan message.Message)
+	channel := make(chan message.GenericMessage)
 	server := server.New("localhost", 8080, channel)
 	go server.Run()
 	server.Connect("localhost", 7878)
 
 	p2pProtocol := server.GetProtocol()
 
-	time.Sleep(5 * time.Second) // Останавливает выполнение main на 30 секунд
+	time.Sleep(5 * time.Second)
 	p2pProtocol.Broadcast(transactionMessage, false)
 
 	time.Sleep(290 * time.Second)
