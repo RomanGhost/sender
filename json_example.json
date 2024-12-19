@@ -41,3 +41,25 @@
         }
     }
 }
+
+
+2024/12/17 17:22:03 Received message from [::1]:7878: {"type":"ResponseBlockMessage","content":{"id":3,"block":{"id":4,"time_create":"2024-12-17T13:22:03.166566100Z","transactions":[],"previous_hash":"000159c13b2e192c546583a72027d99f3053f32dda5dba89eeb9d9444908b484e66239a9f27f1bba6c66c2d8373bb258abda969293b3def80833bd0bf4ef9483","nonce":9611},"time_stamp":"2024-12-17T13:22:03.167151500Z","force":false}}
+2024/12/17 17:22:03 Failed to deserialize message: json: Unmarshal(non-pointer message.GenericMessage)
+2024/12/17 17:22:05 Received message from [::1]:7878: {"type":"ResponseBlockMessage","content":{"id":4,"block":{"id":5,"time_create":"2024-12-17T13:22:05.004371500Z","transactions":[],"previous_hash":"000991fe4387ca3ab20c49124084ddcf65289eae3319aff16895a1996241d339e4b3a815bdcf3d3032f402dcd9a406c8deb947f628385c0f14af3f7e89c7a668","nonce":1087},"time_stamp":"2024-12-17T13:22:05.006359500Z","force":false}}
+2024/12/17 17:22:05 Failed to deserialize message: json: Unmarshal(non-pointer message.GenericMessage)
+2024/12/17 17:22:06 Received message from [::1]:7878: {"type":"ResponseBlockMessage","content":{"id":5,"block":{"id":6,"time_create":"2024-12-17T13:22:06.001650800Z","transactions":[],"previous_hash":"000390d561619f08c963ab077cb3e8f7e3a54b5ad888f764f1e479878813451df5ab80e16f6c0ae7a9ac1c3c04b87e25da602c0937eaaed50edc7797a08affd3","nonce":523},"time_stamp":"2024-12-17T13:22:06.003815600Z","force":false}}
+2024/12/17 17:22:06 Failed to deserialize message: json: Unmarshal(non-pointer message.GenericMessage)
+2024/12/17 17:22:06 Received message from [::1]:7878: {"type":"ResponseBlockMessage","content":{"id":6,"block":{"id":7,"time_create":"2024-12-17T13:22:06.836275100Z","transactions":[],"previous_hash":"0003773304852030970c2cd58d818e3c0134ad733a3a51ce6dd05187a09876263834eab6d7dc3266ec230f2616e566a221c599005072d714b523e47bbe78d4b1","nonce":435},"time_stamp":"2024-12-17T13:22:06.838097300Z","force":false}}
+2024/12/17 17:22:06 Failed to deserialize message: json: Unmarshal(non-pointer message.GenericMessage)
+2024/12/17 17:22:18 Received message from [::1]:7878: {"type":"ResponseBlockMessage","content":{"id":7,"block":{"id":8,"time_create":"2024-12-17T13:22:18.574740700Z","transactions":[],"previous_hash":"0003104418361018b887e30db022a08ea88e43b1c6f96dc44d0ba72ce78b8a087f3a1189983fb2fc64d1dddf3c0defc279820a20cd166c2251d6672bb4a0a592","nonce":6879},"time_stamp":"2024-12-17T13:22:18.575840300Z","force":false}}
+2024/12/17 17:22:18 Failed to deserialize message: json: Unmarshal(non-pointer message.GenericMessage)
+2024/12/17 17:22:21 Received message from [::1]:7878: {"type":"ResponseBlockMessage","content":{"id":8,"block":{"id":9,"time_create":"2024-12-17T13:22:21.740006Z","transactions":[],"previous_hash":"000a6036d854b86308bd56fee3dbd3329b286d9b0d4a511c0a54a2ca4fb9208992437e8b3515a1381c3cf8a8cf46d88c2b65c79ffd8e83c85a16a230cc8f81c6","nonce":1895},"time_stamp":"2024-12-17T13:22:21.742189700Z","force":false}}
+2024/12/17 17:22:21 Failed to deserialize message: json: Unmarshal(non-pointer message.GenericMessage)
+2024/12/17 17:22:22 Received message from [::1]:7878: {"type":"ResponseBlockMessage","content":{"id":9,"block":{"id":10,"time_create":"2024-12-17T13:22:22.903571500Z","transactions":[],"previous_hash":"0007674c204e4911eff21f15022a02a27997344c6d70f05a4f1248a11f0a383c97ce4f6f4c52657a62dd66b028ebb15bb77e8d32c02c191e2465f5d2bbc4bff7","nonce":768},"time_stamp":"2024-12-17T13:22:22.904671200Z","force":false}}
+2024/12/17 17:22:22 Failed to deserialize message: json: Unmarshal(non-pointer message.GenericMessage)
+2024/12/17 17:22:29 Received message from [::1]:7878: {"type":"ResponseBlockMessage","content":{"id":10,"block":{"id":11,"time_create":"2024-12-17T13:22:29.711458400Z","transactions":[],"previous_hash":"0000d5221d85c21cc1808ce6ef1f5a43fdaa2e07a44fb93b5ff02cd7cece06672aaf3c3d95ac37364089059e68a3200a29ec3c77b8b79ddc05d455bd75febdcf","nonce":4446},"time_stamp":"2024-12-17T13:22:29.712978500Z","force":false}}
+2024/12/17 17:22:29 Failed to deserialize message: json: Unmarshal(non-pointer message.GenericMessage)
+{
+    "type":"ResponseBlockMessage",
+    "content":{"id":11,"block":{"id":12,"time_create":"2024-12-17T13:22:50.059216900Z","transactions":[],"previous_hash":"000d204437c92cdce852ce9e3da96a75be760238320bdbfb66c5218ef59cd2e793e09ed48025b1258fdc7cde9f86aeadf0811e69ccd803a878c939c6d838a4c8","nonce":12390},"time_stamp":"2024-12-17T13:22:50.061422800Z","force":false}
+}

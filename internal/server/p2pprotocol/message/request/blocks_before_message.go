@@ -19,5 +19,5 @@ func NewBlocksBeforeMessage() *BlocksBeforeMessage {
 }
 
 func (fm *BlocksBeforeMessage) MessageType() string {
-	return "RequestBlocksBeforeMessage"
+	return message.RequestBlocksBeforeMessage.String()
 }

@@ -22,5 +22,5 @@ func NewTransactionMessage(transaction *transaction.Transaction) *TransactionMes
 }
 
 func (m *TransactionMessage) MessageType() string {
-	return "ResponseTransactionMessage"
+	return message.ResponseTransactionMessage.String()
 }

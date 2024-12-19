@@ -6,8 +6,8 @@ import (
 	"sender/data/blockchain/wallet"
 	"sender/data/deal"
 	"sender/internal/server"
-	"sender/internal/server/p2pprotocol/message"
 	"sender/internal/server/p2pprotocol/message/responce"
+	"sender/internal/server/p2pprotocol/serializemessage"
 	"time"
 )
 
@@ -17,9 +17,9 @@ func getDeal() *deal.Deal {
 		"buyOrder": {
 			"id": 10,
 			"userLogin": "roman",
-			"walletId": 3,
+			"walletID": 3,
 			"cryptocurrencyCode": "BTC",
-			"cardId": 2,
+			"cardID": 2,
 			"typeName": "Покупка",
 			"statusName": "Используется в сделке",
 			"unitPrice": 150.75,
@@ -31,9 +31,9 @@ func getDeal() *deal.Deal {
 		"sellOrder": {
 			"id": 2,
 			"userLogin": "roman",
-			"walletId": 3,
+			"walletID": 3,
 			"cryptocurrencyCode": "BTC",
-			"cardId": 2,
+			"cardID": 2,
 			"typeName": "Покупка",
 			"statusName": "Используется в сделке",
 			"unitPrice": 150.75,
@@ -63,7 +63,7 @@ func main() {
 	newTransaction.Sign()
 	transactionMessage := responce.NewTransactionMessage(newTransaction)
 
-	channel := make(chan message.GenericMessage)
+	channel := make(chan serializemessage.GenericMessage)
 	server := server.New("localhost", 8080, channel)
 	go server.Run()
 	server.Connect("localhost", 7878)
@@ -73,8 +73,8 @@ func main() {
 	time.Sleep(5 * time.Second)
 	p2pProtocol.Broadcast(transactionMessage, false)
 
-	time.Sleep(290 * time.Second)
 	fmt.Println("Код успешно завершается!")
-	for {
+	for c := range channel {
+		fmt.Printf("New message: %v/n/n", c)
 	}
 }

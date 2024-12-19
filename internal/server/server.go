@@ -9,11 +9,11 @@ import (
 
 	"sender/internal/server/connectionpool"
 	"sender/internal/server/p2pprotocol"
-	"sender/internal/server/p2pprotocol/message"
+	"sender/internal/server/p2pprotocol/serializemessage"
 )
 
 const HandshakeMessage = "NEW_CONNECT!\r\n"
-const Timeout = 5 //mins
+const Timeout = 10 //mins
 const BufferSize = 4096
 
 type BlockchainServer struct {
@@ -23,7 +23,7 @@ type BlockchainServer struct {
 	P2PProtocol    *p2pprotocol.P2PProtocol
 }
 
-func New(address string, port int, sender chan message.GenericMessage) *BlockchainServer {
+func New(address string, port int, sender chan serializemessage.GenericMessage) *BlockchainServer {
 	connectionPool := connectionpool.New(BufferSize)
 	p2pProtocol := p2pprotocol.New(connectionPool, sender)
 
@@ -102,16 +102,19 @@ func (bs *BlockchainServer) handleConnection(conn net.Conn) {
 		conn.Write([]byte("Unauthorized\n"))
 		return
 	}
+	// p2p_protocol.lock().unwrap().request_first_message();
 
 	log.Printf("Authorized client connected from %s", peerAddress)
 	bs.ConnectionPool.AddPeer(peerAddress, conn)
+
+	time.Sleep(1 * time.Second)
+	bs.P2PProtocol.RequestInfoMessage()
 
 	// Initialize last message time
 	lastMessageTime := time.Now()
 
 	buffer := make([]byte, BufferSize)
 	var accumulatedData string
-
 	for {
 		// Check for timeout
 		if time.Since(lastMessageTime) > Timeout*time.Minute {

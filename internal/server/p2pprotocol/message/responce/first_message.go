@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-type FirstMessage struct {
+type InfoMessage struct {
 	message.BaseMessage
 }
 
-func NewFirstMessage() *FirstMessage {
-	return &FirstMessage{
+func NewInfoMessage() *InfoMessage {
+	return &InfoMessage{
 		BaseMessage: message.BaseMessage{
 			ID:        0,
 			Timestamp: time.Now(),
@@ -18,6 +18,6 @@ func NewFirstMessage() *FirstMessage {
 	}
 }
 
-func (fm *FirstMessage) MessageType() string {
-	return "ResponseMessageInfo"
+func (fm *InfoMessage) MessageType() string {
+	return message.ResponseMessageInfo.String()
 }

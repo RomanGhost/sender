@@ -24,5 +24,5 @@ func NewBlockMessage(block *block.Block, force bool) *BlockMessage {
 }
 
 func (m *BlockMessage) MessageType() string {
-	return "ResponseBlockMessage"
+	return message.ResponseBlockMessage.String()
 }

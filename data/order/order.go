@@ -5,11 +5,11 @@ import (
 )
 
 type Order struct {
-	Id                 int     `json:"id"`
+	ID                 int     `json:"id"`
 	UserLogin          string  `json:"userLogin"`
-	WalletId           int     `json:"walletId"`
+	WalletID           int     `json:"walletID"`
 	CryptocurrencyCode string  `json:"cryptocurrencyCode"`
-	CardId             int     `json:"cardId"`
+	CardID             int     `json:"cardID"`
 	TypeName           string  `json:"typeName"`
 	StatusName         string  `json:"statusName"`
 	UnitPrice          float64 `json:"unitPrice"`

@@ -22,5 +22,5 @@ func NewChainMessage(chain []block.Block) *ChainMessage {
 }
 
 func (cm *ChainMessage) MessageType() string {
-	return "ResponseChainMessage"
+	return message.ResponseChainMessage.String()
 }

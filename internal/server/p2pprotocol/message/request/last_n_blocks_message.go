@@ -21,5 +21,5 @@ func NewLastNBlocksMessage(countBlocks uint) *LastNBlocksMessage {
 }
 
 func (m *LastNBlocksMessage) MessageType() string {
-	return "RequestLastNBlocksMessage"
+	return message.RequestLastNBlocksMessage.String()
 }

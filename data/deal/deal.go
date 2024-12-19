@@ -6,7 +6,7 @@ import (
 )
 
 type Deal struct {
-	Id               int          `json:"id"`
+	ID               int          `json:"id"`
 	BuyOrder         *order.Order `json:"buyOrder"`
 	SellOrder        *order.Order `json:"sellOrder"`
 	StatusName       string       `json:"statusName"`
