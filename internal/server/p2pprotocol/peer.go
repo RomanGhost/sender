@@ -1,6 +1,7 @@
 package p2pprotocol
 
 import (
+	"fmt"
 	"log"
 	"sender/data/blockchain/block"
 	"sender/data/blockchain/transaction"
@@ -34,6 +35,8 @@ func (p *P2PProtocol) HandleMessage(messageJSON string) {
 		return
 	}
 
+	log.Printf("P2P get new message: %v\n", genericMessage.Content.MessageType())
+
 	switch genericMessage.Type {
 	case "RequestMessageInfo":
 		{
@@ -50,17 +53,17 @@ func (p *P2PProtocol) HandleMessage(messageJSON string) {
 
 			return
 		}
-	default:
-		{
-		}
 	}
 
 	messageID := genericMessage.Content.GetID()
-	if p.lastMessageID <= messageID {
-		p.lastMessageID = messageID
-	} else {
+	log.Printf("P2P get new message with id: %v, My ID: %v\n", messageID, p.lastMessageID)
+	if messageID <= p.lastMessageID {
 		return
+	} else {
+		p.lastMessageID = messageID
 	}
+	fmt.Printf("MessageId: %v/%v\n", p.lastMessageID, messageID)
+
 	// send message to channel
 	p.sender <- *genericMessage
 	//send everyone client
@@ -111,11 +114,11 @@ func (p *P2PProtocol) ResponseChainMessage(sendChain []block.Block) {
 
 func (p *P2PProtocol) Broadcast(getMessage message.Message, receive bool) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 	if !receive {
 		p.lastMessageID++
 	}
 	getMessage.SetID(p.lastMessageID)
+	p.mu.Unlock()
 
 	genericMessage := serializemessage.NewGenericMessage(getMessage)
 	jsonText, _ := genericMessage.ToJSON()

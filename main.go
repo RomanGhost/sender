@@ -2,14 +2,24 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"sender/data/blockchain/transaction"
 	"sender/data/blockchain/wallet"
 	"sender/data/deal"
 	"sender/internal/server"
-	"sender/internal/server/p2pprotocol/message/responce"
+	"sender/internal/server/p2pprotocol"
 	"sender/internal/server/p2pprotocol/serializemessage"
 	"time"
 )
+
+func sendTransactions(p2p *p2pprotocol.P2PProtocol, newTransaction *transaction.Transaction) {
+	for {
+		time.Sleep(time.Second * 10)
+		p2p.ResponseTransactionMessage(newTransaction)
+		log.Println("Send transaction")
+
+	}
+}
 
 func getDeal() *deal.Deal {
 	dealJson := []byte(`{
@@ -61,7 +71,6 @@ func main() {
 
 	newTransaction, _ := transaction.New(newWallet, newDeal)
 	newTransaction.Sign()
-	transactionMessage := responce.NewTransactionMessage(newTransaction)
 
 	channel := make(chan serializemessage.GenericMessage)
 	server := server.New("localhost", 8080, channel)
@@ -70,11 +79,10 @@ func main() {
 
 	p2pProtocol := server.GetProtocol()
 
-	time.Sleep(5 * time.Second)
-	p2pProtocol.Broadcast(transactionMessage, false)
+	go sendTransactions(p2pProtocol, newTransaction)
 
-	fmt.Println("Код успешно завершается!")
 	for c := range channel {
-		fmt.Printf("New message: %v/n/n", c)
+
+		fmt.Printf("New message: %v\n", c)
 	}
 }

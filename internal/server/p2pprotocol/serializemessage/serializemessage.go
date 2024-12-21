@@ -73,7 +73,8 @@ func FromJSON(jsonByte []byte) (*GenericMessage, error) {
 			newMessage = &tm
 		}
 	}
-	jsonutil.FromJSON(jsonByte, &newMessage)
+	jsonutil.FromJSON(gms.Content, &newMessage)
+
 	gm := NewGenericMessage(newMessage)
 
 	return gm, err

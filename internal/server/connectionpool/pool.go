@@ -69,8 +69,6 @@ func (cp *ConnectionPool) Broadcast(message string) {
 	disconnectedPeers := []string{}
 	bufferSize := cp.bufferSize
 
-	fmt.Println("Начинаем отправку сообщений")
-
 	// Добавляем перенос строки для разделения сообщений.
 	message += "\n"
 	startIndex := 0
@@ -82,7 +80,7 @@ func (cp *ConnectionPool) Broadcast(message string) {
 			endIndex = len(message)
 		}
 		messageChunk := message[startIndex:endIndex]
-		fmt.Printf("Само сообщение: %s\n", messageChunk)
+		// fmt.Printf("Само сообщение: %s\n", messageChunk)
 
 		// Отправляем сообщение каждому пиру.
 		for address, conn := range cp.peers {
@@ -98,7 +96,6 @@ func (cp *ConnectionPool) Broadcast(message string) {
 	for _, address := range disconnectedPeers {
 		cp.RemovePeer(address)
 	}
-	fmt.Println("Сообщение отправлено")
 }
 
 // GetBuffer создает пустой буфер заданного размера.

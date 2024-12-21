@@ -42,6 +42,7 @@ func (bs *BlockchainServer) GetProtocol() *p2pprotocol.P2PProtocol {
 func (bs *BlockchainServer) Run() {
 	listenerAddress := fmt.Sprintf("%s:%d", bs.Address, bs.Port)
 	listener, err := net.Listen("tcp", listenerAddress)
+
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 		return
