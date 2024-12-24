@@ -5,7 +5,7 @@ import (
 	"log"
 	"sender/internal/data/blockchain/transaction"
 	"sender/internal/data/deal"
-	kafkaprocessing "sender/internal/process/kafka_processing"
+	"sender/internal/process"
 	"sender/internal/server/p2pprotocol"
 	"sync"
 	"time"
@@ -64,7 +64,7 @@ func getDeal() *deal.Deal {
 	return dealRead
 }
 
-func writeKafkaMessage(kafka_process *kafkaprocessing.KafkaProcess, start, end int, wg *sync.WaitGroup) {
+func writeKafkaMessage(kafka_process *process.KafkaProcess, start, end int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for i := start; i < end; i++ {
 		fmt.Println(i)
@@ -72,7 +72,7 @@ func writeKafkaMessage(kafka_process *kafkaprocessing.KafkaProcess, start, end i
 	}
 }
 
-func readKafkaMessage(kafka_process *kafkaprocessing.KafkaProcess) {
+func readKafkaMessage(kafka_process *process.KafkaProcess) {
 	kafka_process.ConnectReader("example-group")
 	defer kafka_process.CloseWriter()
 
@@ -86,14 +86,15 @@ func readKafkaMessage(kafka_process *kafkaprocessing.KafkaProcess) {
 }
 
 func main() {
-	// kafka_process, err := kafkaprocessing.NewKafkaProcess("localhost:9092", "GetDeal", 5, 3)
-	// if err != nil {
-	// 	log.Fatalln("Error with topic kafka: ", err)
-	// }
-	// kafka_process.ConnectWriter()
-	// defer kafka_process.CloseWriter()
+	kafka_process, err := process.NewKafkaProcess("localhost:9092", "GetDeal", 3, 3)
+	if err != nil {
+		log.Fatalln("Error with topic kafka: ", err)
+	}
+	kafka_process.ConnectWriter()
+	defer kafka_process.CloseWriter()
 
-	// go readKafkaMessage(kafka_process)
+	go readKafkaMessage(kafka_process)
+	// time.Sleep(time.Minute * 3)
 
 	// var wg sync.WaitGroup
 	// n := 10
@@ -117,7 +118,7 @@ func main() {
 
 	// serverBlockchain := server.New("localhost", 8080, channel)
 	// go serverBlockchain.Run()
-	// err = serverBlockchain.Connect("localhost", 7878)
+	// err := serverBlockchain.Connect("localhost", 7878)
 	// if err != nil {
 	// 	fmt.Printf("Coudn't connect to server: %v\n", err)
 	// }
@@ -125,7 +126,15 @@ func main() {
 	// p2pProtocol := serverBlockchain.GetProtocol()
 
 	// go sendTransactions(p2pProtocol, newTransaction)
-	// go process.MessageProcessing(channel, p2pProtocol)
+
+	// kafka_process_write, err := process.NewKafkaProcess("localhost:9092", "GetDeal", 3, 3)
+	// if err != nil {
+	// 	log.Fatalln("Error with topic kafka: ", err)
+	// }
+	// kafka_process_write.ConnectWriter()
+	// defer kafka_process_write.CloseWriter()
+
+	// go process.MessageProcessing(channel, p2pProtocol, kafka_process_write)
 
 	// fmt.Println("Enter q to exit: ")
 	// for {

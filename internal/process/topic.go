@@ -1,4 +1,4 @@
-package kafkaprocessing
+package process
 
 import (
 	"context"
@@ -73,6 +73,10 @@ func (kp *KafkaProcess) CloseWriter() {
 	}
 }
 
+func (kp *KafkaProcess) WriterConnected() bool {
+	return kp.writer != nil
+}
+
 func (kp *KafkaProcess) ConnectReader(groupID string) error {
 	if kp.reader != nil {
 		return fmt.Errorf("reader is already connected")
@@ -90,6 +94,10 @@ func (kp *KafkaProcess) CloseReader() {
 		kp.reader.Close()
 		kp.reader = nil
 	}
+}
+
+func (kp *KafkaProcess) ReaderConnected() bool {
+	return kp.writer != nil
 }
 
 func (kp *KafkaProcess) WriteMessage(message string) error {
