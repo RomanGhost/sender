@@ -1,7 +1,7 @@
 package responce
 
 import (
-	"sender/data/blockchain/transaction"
+	"sender/internal/data/blockchain/transaction"
 	"sender/internal/server/p2pprotocol/message"
 	"time"
 )

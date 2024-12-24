@@ -3,8 +3,8 @@ package p2pprotocol
 import (
 	"fmt"
 	"log"
-	"sender/data/blockchain/block"
-	"sender/data/blockchain/transaction"
+	"sender/internal/data/blockchain/block"
+	"sender/internal/data/blockchain/transaction"
 	"sender/internal/server/connectionpool"
 	"sender/internal/server/p2pprotocol/message"
 	"sender/internal/server/p2pprotocol/message/request"
@@ -16,11 +16,11 @@ import (
 type P2PProtocol struct {
 	connectionPool *connectionpool.ConnectionPool
 	lastMessageID  uint64
-	sender         chan<- serializemessage.GenericMessage
+	sender         chan<- message.Message
 	mu             sync.Mutex
 }
 
-func New(connectionPool *connectionpool.ConnectionPool, sender chan<- serializemessage.GenericMessage) *P2PProtocol {
+func New(connectionPool *connectionpool.ConnectionPool, sender chan<- message.Message) *P2PProtocol {
 	return &P2PProtocol{
 		connectionPool: connectionPool,
 		lastMessageID:  0,
@@ -38,13 +38,13 @@ func (p *P2PProtocol) HandleMessage(messageJSON string) {
 	log.Printf("P2P get new message: %v\n", genericMessage.Content.MessageType())
 
 	switch genericMessage.Type {
-	case "RequestMessageInfo":
+	case message.RequestMessageInfo.String():
 		{
 			p.ResponseInfoMessage()
 
 			return
 		}
-	case "ResponseMessageInfo":
+	case message.ResponseMessageInfo.String():
 		{
 			messageID := genericMessage.Content.GetID()
 			if p.lastMessageID < messageID {
@@ -65,7 +65,7 @@ func (p *P2PProtocol) HandleMessage(messageJSON string) {
 	fmt.Printf("MessageId: %v/%v\n", p.lastMessageID, messageID)
 
 	// send message to channel
-	p.sender <- *genericMessage
+	p.sender <- genericMessage.Content
 	//send everyone client
 	p.Broadcast(genericMessage.Content, true)
 }
@@ -108,6 +108,13 @@ func (p *P2PProtocol) ResponseTransactionMessage(sendTransaction *transaction.Tr
 
 func (p *P2PProtocol) ResponseChainMessage(sendChain []block.Block) {
 	message := responce.NewChainMessage(sendChain)
+
+	p.Broadcast(message, false)
+}
+
+func (p *P2PProtocol) ResponcePeerMessage() {
+	addresses := p.connectionPool.GetPeerAddresses()
+	message := responce.NewPeerMessage(addresses)
 
 	p.Broadcast(message, false)
 }

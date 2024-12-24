@@ -72,6 +72,11 @@ func FromJSON(jsonByte []byte) (*GenericMessage, error) {
 			var tm responce.TransactionMessage
 			newMessage = &tm
 		}
+	case message.ResponsePeerMessage.String():
+		{
+			var pm responce.PeerMessage
+			newMessage = &pm
+		}
 	}
 	jsonutil.FromJSON(gms.Content, &newMessage)
 

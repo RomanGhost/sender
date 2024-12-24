@@ -9,7 +9,7 @@ import (
 
 	"sender/internal/server/connectionpool"
 	"sender/internal/server/p2pprotocol"
-	"sender/internal/server/p2pprotocol/serializemessage"
+	"sender/internal/server/p2pprotocol/message"
 )
 
 const HandshakeMessage = "NEW_CONNECT!\r\n"
@@ -23,7 +23,7 @@ type BlockchainServer struct {
 	P2PProtocol    *p2pprotocol.P2PProtocol
 }
 
-func New(address string, port int, sender chan serializemessage.GenericMessage) *BlockchainServer {
+func New(address string, port int, sender chan message.Message) *BlockchainServer {
 	connectionPool := connectionpool.New(BufferSize)
 	p2pProtocol := p2pprotocol.New(connectionPool, sender)
 
@@ -62,17 +62,17 @@ func (bs *BlockchainServer) Run() {
 	}
 }
 
-func (bs *BlockchainServer) Connect(address string, port int) {
+func (bs *BlockchainServer) Connect(address string, port int) error {
 	connectionAddress := fmt.Sprintf("%s:%d", address, port)
 	conn, err := net.Dial("tcp", connectionAddress)
 	if err != nil {
-		log.Printf("Error connecting to server: %v", err)
-		return
+		return fmt.Errorf("Error connecting to server: %v", err)
 	}
 
 	log.Printf("Connected to %s", connectionAddress)
 
 	go bs.handleConnection(conn)
+	return nil
 }
 
 func (bs *BlockchainServer) handleConnection(conn net.Conn) {
@@ -110,6 +110,7 @@ func (bs *BlockchainServer) handleConnection(conn net.Conn) {
 
 	time.Sleep(1 * time.Second)
 	bs.P2PProtocol.RequestInfoMessage()
+	bs.P2PProtocol.ResponcePeerMessage()
 
 	// Initialize last message time
 	lastMessageTime := time.Now()

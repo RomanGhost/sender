@@ -9,6 +9,7 @@ const (
 
 	ResponseBlockMessage       MessageType = "ResponseBlockMessage"
 	ResponseChainMessage       MessageType = "ResponseChainMessage"
+	ResponsePeerMessage        MessageType = "ResponsePeerMessage"
 	ResponseMessageInfo        MessageType = "ResponseMessageInfo"
 	ResponseTransactionMessage MessageType = "ResponseTransactionMessage"
 )
