@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sender/internal/data/blockchain/transaction"
+	"sender/internal/data/blockchain/wallet"
 	"sender/internal/data/deal"
-	kafkaprocessing "sender/internal/process/kafka_processing"
+	"sender/internal/process"
+	"sender/internal/server"
 	"sender/internal/server/p2pprotocol"
+	"sender/internal/server/p2pprotocol/message"
 	"sync"
 	"time"
 )
@@ -64,75 +68,69 @@ func getDeal() *deal.Deal {
 	return dealRead
 }
 
-func writeKafkaMessage(kafka_process *kafkaprocessing.KafkaProcess, start, end int, wg *sync.WaitGroup) {
+func writeKafkaMessage(kafka_process *process.KafkaProcess, start, end int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for i := start; i < end; i++ {
 		fmt.Println(i)
-		kafka_process.WriteMessage(fmt.Sprintf("Hello! %v", i))
+		kafka_process.WriteMessage(context.Background(), fmt.Sprintf("Hello! %v", i))
 	}
 }
 
-func readKafkaMessage(kafka_process *kafkaprocessing.KafkaProcess) {
-	kafka_process.ConnectReader("example-group")
+func readKafkaMessage(kafka_process *process.KafkaProcess) {
+	kafka_process.ConnectReader()
 	defer kafka_process.CloseWriter()
 
-	for {
-		message, err := kafka_process.ReadMessage()
-		if err != nil {
-			log.Fatal("Error of reading", err)
-		}
-		log.Printf("Read new message from kafka: %s", message.Value)
+	handleMessage := func(msg string) {
+		log.Printf("Processing message: %s", msg)
+	}
+
+	err := kafka_process.ReadMessages(context.Background(), handleMessage)
+	if err != nil {
+		log.Fatal("Error of reading", err)
 	}
 }
 
 func main() {
-	// kafka_process, err := kafkaprocessing.NewKafkaProcess("localhost:9092", "GetDeal", 5, 3)
-	// if err != nil {
-	// 	log.Fatalln("Error with topic kafka: ", err)
-	// }
-	// kafka_process.ConnectWriter()
-	// defer kafka_process.CloseWriter()
+	kafka_process_go := process.NewKafkaProcess("localhost:9092", "GoGetDeal", "example-group")
+	// kafka_process_spring := process.NewKafkaProcess("localhost:9092", "SpringGetDeal", "example-group")
+	kafka_process_go.ConnectWriter()
+	defer kafka_process_go.Close()
 
-	// go readKafkaMessage(kafka_process)
+	go readKafkaMessage(kafka_process_go)
 
-	// var wg sync.WaitGroup
-	// n := 10
-	// start := 0
-	// for i := range 10 {
-	// 	fmt.Println(i)
-	// 	go writeKafkaMessage(kafka_process, start, start+n, &wg)
-	// 	start += n
-	// 	wg.Add(1)
-	// }
-	// wg.Wait()
+	newWallet := wallet.New()
+	newDeal := getDeal()
 
-	// newWallet := wallet.New()
-	// newDeal := getDeal()
+	newTransaction, _ := transaction.New(newWallet, newDeal)
+	newTransaction.Sign()
 
-	// newTransaction, _ := transaction.New(newWallet, newDeal)
-	// newTransaction.Sign()
+	channel := make(chan message.Message)
+	defer close(channel)
 
-	// channel := make(chan message.Message)
-	// defer close(channel)
+	serverBlockchain := server.New("localhost", 8080, channel)
+	go serverBlockchain.Run()
+	err := serverBlockchain.Connect("localhost", 7878)
+	if err != nil {
+		fmt.Printf("Coudn't connect to server: %v\n", err)
+	}
 
-	// serverBlockchain := server.New("localhost", 8080, channel)
-	// go serverBlockchain.Run()
-	// err = serverBlockchain.Connect("localhost", 7878)
-	// if err != nil {
-	// 	fmt.Printf("Coudn't connect to server: %v\n", err)
-	// }
+	p2pProtocol := serverBlockchain.GetProtocol()
 
-	// p2pProtocol := serverBlockchain.GetProtocol()
+	go sendTransactions(p2pProtocol, newTransaction)
 
-	// go sendTransactions(p2pProtocol, newTransaction)
-	// go process.MessageProcessing(channel, p2pProtocol)
+	if err != nil {
+		log.Fatalln("Error with topic kafka: ", err)
+	}
+	kafka_process_go.ConnectWriter()
 
-	// fmt.Println("Enter q to exit: ")
-	// for {
-	// 	text2 := ""
-	// 	fmt.Scanln(text2)
-	// 	if text2 == "q" {
-	// 		break
-	// 	}
-	// }
+	go process.MessageProcessing(channel, p2pProtocol, kafka_process_go)
+
+	fmt.Println("Enter q to exit: ")
+	for {
+		text2 := ""
+		fmt.Scanln(text2)
+		if text2 == "q" {
+			break
+		}
+	}
 }
