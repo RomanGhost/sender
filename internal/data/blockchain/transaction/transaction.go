@@ -13,12 +13,14 @@ import (
 )
 
 type Transaction struct {
-	Sender      string  `json:"sender"`
-	DealMessage string  `json:"message"` //*deal.Deal `json:"message"`//TODO(Решить что делать с полем сообщения)
-	Transfer    float64 `json:"transfer"`
-	Signature   string  `json:"signature"`
-	wallet      *wallet.Wallet
-	deal        *deal.Deal
+	Sender          string  `json:"sender"`
+	BuyerPublicKey  string  `json:"buyer"`
+	SellerPublicKey string  `json:"seller"`
+	DealMessage     string  `json:"message"` //*deal.Deal `json:"message"`//TODO(Решить что делать с полем сообщения)
+	Transfer        float64 `json:"transfer"`
+	Signature       string  `json:"signature"`
+	wallet          *wallet.Wallet
+	deal            *deal.Deal
 }
 
 // New creates a new transaction and initializes it with data
@@ -29,14 +31,18 @@ func New(walletKeys *wallet.Wallet, deal *deal.Deal) (*Transaction, error) {
 	transfer := deal.BuyOrder.Quantity * deal.BuyOrder.UnitPrice
 	jsonData, _ := deal.ToJson()
 	dataString := string(jsonData)
+	seller := deal.SellOrder.UserHashPublicKey
+	buyer := deal.BuyOrder.UserHashPublicKey
 
 	return &Transaction{
-		Sender:      serializeWallet.PublicKey,
-		DealMessage: dataString, //deal,
-		Transfer:    transfer,
-		Signature:   "",
-		wallet:      walletKeys,
-		deal:        deal,
+		Sender:          serializeWallet.PublicKey,
+		DealMessage:     dataString, //deal,
+		SellerPublicKey: seller,
+		BuyerPublicKey:  buyer,
+		Transfer:        transfer,
+		Signature:       "",
+		wallet:          walletKeys,
+		deal:            deal,
 	}, nil
 }
 

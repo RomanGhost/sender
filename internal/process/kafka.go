@@ -91,7 +91,7 @@ func (kp *KafkaProcess) WriteMessage(ctx context.Context, message string) error 
 	}
 
 	msg := kafka.Message{
-		Key:   []byte(fmt.Sprintf("key-%d", time.Now().UnixNano())),
+		Key:   []byte(fmt.Sprintf("DeaiAdd-%d", time.Now().UnixNano())),
 		Value: []byte(message),
 	}
 

@@ -29,29 +29,21 @@ func getDeal() *deal.Deal {
 		"id": 3,
 		"buyOrder": {
 			"id": 10,
-			"userLogin": "roman",
-			"walletID": 3,
+			"userHashPublicKey": "sha256",
 			"cryptocurrencyCode": "BTC",
-			"cardID": 2,
 			"typeName": "Покупка",
-			"statusName": "Используется в сделке",
 			"unitPrice": 150.75,
 			"quantity": 3.0,
-			"description": "Созданная сделка для контрагента",
 			"createdAt": "2024-11-23T01:17:14.506902",
 			"lastStatusChange": "2024-11-23T01:17:14.575606"
 		},
 		"sellOrder": {
 			"id": 2,
-			"userLogin": "roman",
-			"walletID": 3,
+			"userHashPublicKey": "sha256",
 			"cryptocurrencyCode": "BTC",
-			"cardID": 2,
-			"typeName": "Покупка",
-			"statusName": "Используется в сделке",
+			"typeName": "Продажа",
 			"unitPrice": 150.75,
 			"quantity": 3.0,
-			"description": "Purchase of cryptocurrency",
 			"createdAt": "2024-11-17T14:30",
 			"lastStatusChange": "2024-11-23T01:24:28.737834"
 		},
@@ -78,7 +70,7 @@ func writeKafkaMessage(kafka_process *process.KafkaProcess, start, end int, wg *
 
 func readKafkaMessage(kafka_process *process.KafkaProcess) {
 	kafka_process.ConnectReader()
-	defer kafka_process.CloseWriter()
+	defer kafka_process.CloseReader()
 
 	handleMessage := func(msg string) {
 		log.Printf("Processing message: %s", msg)
@@ -91,12 +83,8 @@ func readKafkaMessage(kafka_process *process.KafkaProcess) {
 }
 
 func main() {
-	kafka_process_go := process.NewKafkaProcess("localhost:9092", "GoGetDeal", "example-group")
-	// kafka_process_spring := process.NewKafkaProcess("localhost:9092", "SpringGetDeal", "example-group")
-	kafka_process_go.ConnectWriter()
-	defer kafka_process_go.Close()
-
-	go readKafkaMessage(kafka_process_go)
+	kafka_process_consumer := process.NewKafkaProcess("localhost:9092", "GoGetDeal", "middle-group")
+	go readKafkaMessage(kafka_process_consumer)
 
 	newWallet := wallet.New()
 	newDeal := getDeal()
@@ -107,7 +95,7 @@ func main() {
 	channel := make(chan message.Message)
 	defer close(channel)
 
-	serverBlockchain := server.New("localhost", 8080, channel)
+	serverBlockchain := server.New("localhost", 7990, channel)
 	go serverBlockchain.Run()
 	err := serverBlockchain.Connect("localhost", 7878)
 	if err != nil {
@@ -121,9 +109,12 @@ func main() {
 	if err != nil {
 		log.Fatalln("Error with topic kafka: ", err)
 	}
-	kafka_process_go.ConnectWriter()
 
-	go process.MessageProcessing(channel, p2pProtocol, kafka_process_go)
+	kafka_process_producer := process.NewKafkaProcess("localhost:9092", "SpringGetDeal", "example-group")
+	kafka_process_producer.ConnectWriter()
+	defer kafka_process_producer.Close()
+
+	go process.MessageProcessing(channel, p2pProtocol, kafka_process_producer)
 
 	fmt.Println("Enter q to exit: ")
 	for {
