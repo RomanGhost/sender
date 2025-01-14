@@ -123,7 +123,7 @@ func (kp *KafkaProcess) ReadMessages(ctx context.Context, handleMessage func(str
 		}
 
 		message := string(msg.Value)
-		log.Printf("Message received: %s", message)
+		log.Printf("Message received from kafka: %s", message)
 
 		// Process the message
 		handleMessage(message)

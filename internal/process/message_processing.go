@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sender/internal/server/p2pprotocol"
-	"sender/internal/server/p2pprotocol/message"
-	"sender/internal/server/p2pprotocol/message/responce"
+	"sender/internal/server/blockchain/p2pprotocol"
+	"sender/internal/server/blockchain/p2pprotocol/message"
+	"sender/internal/server/blockchain/p2pprotocol/message/responce"
 )
 
 func MessageProcessing(c chan message.Message, p2pProtocol *p2pprotocol.P2PProtocol, kafkaWriter *KafkaProcess) error {

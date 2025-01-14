@@ -8,72 +8,29 @@ import (
 	"sender/internal/data/blockchain/wallet"
 	"sender/internal/data/deal"
 	"sender/internal/process"
-	"sender/internal/server"
-	"sender/internal/server/p2pprotocol"
-	"sender/internal/server/p2pprotocol/message"
-	"sync"
-	"time"
+	"sender/internal/server/blockchain"
+	"sender/internal/server/blockchain/p2pprotocol"
+	"sender/internal/server/blockchain/p2pprotocol/message"
+	"sender/internal/server/web"
 )
 
-func sendTransactions(p2p *p2pprotocol.P2PProtocol, newTransaction *transaction.Transaction) {
-	for {
-		time.Sleep(time.Second * 30)
-		p2p.ResponseTransactionMessage(newTransaction)
-		log.Println("Send transaction")
-
-	}
-}
-
-func getDeal() *deal.Deal {
-	dealJson := []byte(`{
-		"id": 3,
-		"buyOrder": {
-			"id": 10,
-			"userHashPublicKey": "sha256",
-			"cryptocurrencyCode": "BTC",
-			"typeName": "Покупка",
-			"unitPrice": 150.75,
-			"quantity": 3.0,
-			"createdAt": "2024-11-23T01:17:14.506902",
-			"lastStatusChange": "2024-11-23T01:17:14.575606"
-		},
-		"sellOrder": {
-			"id": 2,
-			"userHashPublicKey": "sha256",
-			"cryptocurrencyCode": "BTC",
-			"typeName": "Продажа",
-			"unitPrice": 150.75,
-			"quantity": 3.0,
-			"createdAt": "2024-11-17T14:30",
-			"lastStatusChange": "2024-11-23T01:24:28.737834"
-		},
-		"statusName": "Подтверждение сделки",
-		"createdAt": "2024-11-23T01:17:14.632595",
-		"lastStatusChange": "2024-11-23T01:17:14.632595"
-	}`)
-
-	dealRead, err := deal.FromJson(dealJson)
-	if err != nil {
-		fmt.Println(err)
-		panic("Deal read error")
-	}
-	return dealRead
-}
-
-func writeKafkaMessage(kafka_process *process.KafkaProcess, start, end int, wg *sync.WaitGroup) {
-	defer wg.Done()
-	for i := start; i < end; i++ {
-		fmt.Println(i)
-		kafka_process.WriteMessage(context.Background(), fmt.Sprintf("Hello! %v", i))
-	}
-}
-
-func readKafkaMessage(kafka_process *process.KafkaProcess) {
+func readKafkaMessage(kafka_process *process.KafkaProcess, p2pProtocol *p2pprotocol.P2PProtocol, wallet *wallet.Wallet) {
 	kafka_process.ConnectReader()
 	defer kafka_process.CloseReader()
 
 	handleMessage := func(msg string) {
-		log.Printf("Processing message: %s", msg)
+		log.Printf("Processing message from kafka: %s", msg)
+
+		newDeal, err := deal.FromJson([]byte(msg))
+		if err != nil {
+			fmt.Println(err)
+			panic("Deal read error")
+		}
+
+		newTransaction, _ := transaction.New(wallet, newDeal)
+		newTransaction.Sign()
+
+		p2pProtocol.ResponseTransactionMessage(newTransaction)
 	}
 
 	err := kafka_process.ReadMessages(context.Background(), handleMessage)
@@ -83,19 +40,11 @@ func readKafkaMessage(kafka_process *process.KafkaProcess) {
 }
 
 func main() {
-	kafka_process_consumer := process.NewKafkaProcess("localhost:9092", "GoGetDeal", "middle-group")
-	go readKafkaMessage(kafka_process_consumer)
-
-	newWallet := wallet.New()
-	newDeal := getDeal()
-
-	newTransaction, _ := transaction.New(newWallet, newDeal)
-	newTransaction.Sign()
-
 	channel := make(chan message.Message)
 	defer close(channel)
 
-	serverBlockchain := server.New("localhost", 7990, channel)
+	//Blockchain
+	serverBlockchain := blockchain.New("localhost", 7990, channel)
 	go serverBlockchain.Run()
 	err := serverBlockchain.Connect("localhost", 7878)
 	if err != nil {
@@ -104,17 +53,28 @@ func main() {
 
 	p2pProtocol := serverBlockchain.GetProtocol()
 
-	go sendTransactions(p2pProtocol, newTransaction)
+	// go sendTransactions(p2pProtocol, newTransaction)
 
-	if err != nil {
-		log.Fatalln("Error with topic kafka: ", err)
-	}
+	// if err != nil {
+	// 	log.Fatalln("Error with topic kafka: ", err)
+	// }
+
+	//Kafka connect
 
 	kafka_process_producer := process.NewKafkaProcess("localhost:9092", "SpringGetDeal", "example-group")
 	kafka_process_producer.ConnectWriter()
 	defer kafka_process_producer.Close()
 
 	go process.MessageProcessing(channel, p2pProtocol, kafka_process_producer)
+
+	kafka_process_consumer := process.NewKafkaProcess("localhost:9092", "GoGetDeal", "middle-group")
+	newWallet := wallet.New()
+
+	go readKafkaMessage(kafka_process_consumer, p2pProtocol, newWallet)
+
+	// web server setting
+	web_server := web.New("7980")
+	go web_server.Run()
 
 	fmt.Println("Enter q to exit: ")
 	for {

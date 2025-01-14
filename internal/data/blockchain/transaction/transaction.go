@@ -32,7 +32,13 @@ func New(walletKeys *wallet.Wallet, deal *deal.Deal) (*Transaction, error) {
 	jsonData, _ := deal.ToJson()
 	dataString := string(jsonData)
 	seller := deal.SellOrder.UserHashPublicKey
+	if len(seller) < 10 {
+		seller = wallet.New().Sereliaze().PublicKey
+	}
 	buyer := deal.BuyOrder.UserHashPublicKey
+	if len(buyer) < 10 {
+		buyer = wallet.New().Sereliaze().PublicKey
+	}
 
 	return &Transaction{
 		Sender:          serializeWallet.PublicKey,
