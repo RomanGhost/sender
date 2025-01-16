@@ -24,7 +24,3 @@ func FromJson(json_b []byte) (*Deal, error) {
 
 	return &deal, err
 }
-
-func (d *Deal) EncodeToString() string {
-	return d.EncodeToString()
-}

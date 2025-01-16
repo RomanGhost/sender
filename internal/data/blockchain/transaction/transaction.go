@@ -16,7 +16,7 @@ type Transaction struct {
 	Sender          string  `json:"sender"`
 	BuyerPublicKey  string  `json:"buyer"`
 	SellerPublicKey string  `json:"seller"`
-	DealMessage     string  `json:"message"` //*deal.Deal `json:"message"`//TODO(Решить что делать с полем сообщения)
+	DealMessage     string  `json:"message"`
 	Transfer        float64 `json:"transfer"`
 	Signature       string  `json:"signature"`
 	wallet          *wallet.Wallet

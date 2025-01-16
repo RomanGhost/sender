@@ -15,8 +15,12 @@ func ToJSON(v interface{}) ([]byte, error) {
 
 // FromJSON - универсальная функция для десериализации JSON в объект.
 func FromJSON(data []byte, v interface{}) error {
-	if len(data) == 0 {
+	if len(data) <= 1 {
 		return errors.New("cannot unmarshal empty data")
+	}
+
+	if v == nil {
+		return errors.New("cannot unmarshal to nil object")
 	}
 	return json.Unmarshal(data, v)
 }

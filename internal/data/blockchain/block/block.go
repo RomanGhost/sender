@@ -15,6 +15,9 @@ type Block struct {
 }
 
 func (b *Block) ToJson() ([]byte, error) {
+	if b.Transactions == nil {
+		b.Transactions = []transaction.Transaction{}
+	}
 	return jsonutil.ToJSON(b)
 }
 

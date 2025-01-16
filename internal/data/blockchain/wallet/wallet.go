@@ -43,3 +43,31 @@ func (w *Wallet) Sereliaze() *WalletSerialize {
 		PrivateKey: privateKeyBase64,
 	}
 }
+
+func Deserialize(serialized *WalletSerialize) (*Wallet, error) {
+	// Декодирование публичного ключа из base64
+	publicKeyBytes, err := base64.RawStdEncoding.DecodeString(serialized.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	publicKey, err := x509.ParsePKCS1PublicKey(publicKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Декодирование приватного ключа из base64
+	privateKeyBytes, err := base64.RawStdEncoding.DecodeString(serialized.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+	privateKey, err := x509.ParsePKCS1PrivateKey(privateKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Восстановление объекта Wallet
+	return &Wallet{
+		PublicKey:  publicKey,
+		PrivateKey: privateKey,
+	}, nil
+}
