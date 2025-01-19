@@ -2,6 +2,7 @@ package connectionpool
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"sync"
 )
@@ -25,7 +26,7 @@ func (cp *ConnectionPool) AddPeer(address string, conn net.Conn) {
 	defer cp.mu.Unlock()
 
 	cp.peers[address] = conn
-	fmt.Printf("Added peer: %s\n", address)
+	log.Printf("Added peer: %s\n", address)
 }
 
 // RemovePeer удаляет пира из пула.
@@ -34,7 +35,7 @@ func (cp *ConnectionPool) RemovePeer(address string) {
 	defer cp.mu.Unlock()
 
 	delete(cp.peers, address)
-	fmt.Printf("Removed peer: %s\n", address)
+	log.Printf("Removed peer: %s\n", address)
 }
 
 // GetAlivePeers возвращает список активных соединений.
@@ -64,7 +65,6 @@ func (cp *ConnectionPool) GetPeerAddresses() []string {
 // Broadcast отправляет сообщение всем подключенным пирами.
 func (cp *ConnectionPool) Broadcast(message string) {
 	cp.mu.Lock()
-	defer cp.mu.Unlock()
 
 	disconnectedPeers := []string{}
 	bufferSize := cp.bufferSize
@@ -80,17 +80,17 @@ func (cp *ConnectionPool) Broadcast(message string) {
 			endIndex = len(message)
 		}
 		messageChunk := message[startIndex:endIndex]
-		// fmt.Printf("Само сообщение: %s\n", messageChunk)
-
 		// Отправляем сообщение каждому пиру.
 		for address, conn := range cp.peers {
+			fmt.Printf("send to %v, message: %s", address, messageChunk)
 			if _, err := conn.Write([]byte(messageChunk)); err != nil {
-				fmt.Printf("Failed to send message to %s: %v\n", address, err)
+				log.Printf("Failed to send message to %s: %v\n", address, err)
 				disconnectedPeers = append(disconnectedPeers, address)
 			}
 		}
 		startIndex += bufferSize
 	}
+	cp.mu.Unlock()
 
 	// Удаляем отключившихся пиров.
 	for _, address := range disconnectedPeers {

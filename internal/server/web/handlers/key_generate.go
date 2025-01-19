@@ -14,8 +14,10 @@ type Keys struct {
 func KeysGenerateHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	newWallet := wallet.New()
-	publicKey := newWallet.Sereliaze().PublicKey
-	privateKey := newWallet.Sereliaze().PrivateKey
+	walletSerialize := newWallet.Sereliaze()
+
+	publicKey := walletSerialize.PublicKey
+	privateKey := walletSerialize.PrivateKey
 
 	jsonKeys := Keys{
 		PublicKey:  publicKey,

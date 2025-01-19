@@ -43,7 +43,7 @@ func FromJSON(jsonByte []byte) (*GenericMessage, error) {
 		}
 	case message.RequestLastNBlocksMessage.String():
 		{
-			var lnbm request.BlocksBeforeMessage
+			var lnbm request.LastNBlocksMessage
 			newMessage = &lnbm
 		}
 	case message.RequestMessageInfo.String():
@@ -84,5 +84,3 @@ func FromJSON(jsonByte []byte) (*GenericMessage, error) {
 
 	return gm, err
 }
-
-// Базовая структура для хранения ID и временной метки

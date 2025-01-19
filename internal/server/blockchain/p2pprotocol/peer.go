@@ -14,13 +14,13 @@ import (
 )
 
 type P2PProtocol struct {
-	connectionPool *connectionpool.ConnectionPool
+	connectionPool connectionpool.ConnectionPoolInterface
 	lastMessageID  uint64
 	sender         chan<- message.Message
 	mu             sync.Mutex
 }
 
-func New(connectionPool *connectionpool.ConnectionPool, sender chan<- message.Message) *P2PProtocol {
+func New(connectionPool connectionpool.ConnectionPoolInterface, sender chan<- message.Message) *P2PProtocol {
 	return &P2PProtocol{
 		connectionPool: connectionPool,
 		lastMessageID:  0,
@@ -117,6 +117,10 @@ func (p *P2PProtocol) ResponcePeerMessage() {
 	message := responce.NewPeerMessage(addresses)
 
 	p.Broadcast(message, false)
+}
+
+func (p *P2PProtocol) GetLastMessageId() uint64 {
+	return p.lastMessageID
 }
 
 func (p *P2PProtocol) Broadcast(getMessage message.Message, receive bool) {
