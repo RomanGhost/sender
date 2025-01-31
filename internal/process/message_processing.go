@@ -9,7 +9,7 @@ import (
 	"sender/internal/server/blockchain/p2pprotocol/message/responce"
 )
 
-func MessageProcessing(c chan message.Message, p2pProtocol *p2pprotocol.P2PProtocol, kafkaWriter *KafkaProcess) error {
+func MessageProcessing(c chan message.Message, p2pProtocol *p2pprotocol.P2PProtocol, kafkaWriter KafkaProcessInterface) error {
 	if !kafkaWriter.WriterConnected() {
 		return fmt.Errorf("Writer isn't open")
 	}
@@ -18,7 +18,7 @@ func MessageProcessing(c chan message.Message, p2pProtocol *p2pprotocol.P2PProto
 		switch msg := messageGet.(type) {
 		case *responce.BlockMessage:
 			for _, tr := range msg.Block.Transactions {
-				log.Printf("Transaction send to kafka topic: %s", kafkaWriter.TopicName)
+				log.Printf("Transaction send to kafka topic: %s", kafkaWriter.GetTopicName())
 				message := tr.DealMessage
 				kafkaWriter.WriteMessage(context.Background(), string(message))
 			}

@@ -2,6 +2,7 @@ package serializemessage
 
 import (
 	"encoding/json"
+	"errors"
 	"sender/internal/jsonutil"
 	"sender/internal/server/blockchain/p2pprotocol/message"
 	"sender/internal/server/blockchain/p2pprotocol/message/request"
@@ -77,6 +78,8 @@ func FromJSON(jsonByte []byte) (*GenericMessage, error) {
 			var pm responce.PeerMessage
 			newMessage = &pm
 		}
+	default:
+		return nil, errors.New("UnknownType")
 	}
 	jsonutil.FromJSON(gms.Content, &newMessage)
 

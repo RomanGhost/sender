@@ -30,6 +30,10 @@ func (ws *WebServer) Run() {
 	log.Print("Server run")
 }
 
+func (ws *WebServer) Routes() *mux.Router {
+	return ws.routes
+}
+
 // Функция для настройки маршрутов
 func identifyRoutes() *mux.Router {
 	router := mux.NewRouter()

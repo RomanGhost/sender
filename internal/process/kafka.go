@@ -10,11 +10,21 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+type WriterInterface interface {
+	WriteMessages(ctx context.Context, messages ...kafka.Message) error
+	Close() error
+}
+
+type ReaderInterface interface {
+	ReadMessage(ctx context.Context) (kafka.Message, error)
+	Close() error
+}
+
 type KafkaProcess struct {
 	BrokerAddress string
 	TopicName     string
-	Reader        *kafka.Reader
-	Writer        *kafka.Writer
+	Reader        ReaderInterface
+	Writer        WriterInterface
 	GroupID       string
 }
 
@@ -38,6 +48,10 @@ func (kp *KafkaProcess) ConnectWriter() {
 	log.Println("Kafka writer connected")
 }
 
+func (kp *KafkaProcess) GetTopicName() string {
+	return kp.TopicName
+}
+
 func (kp *KafkaProcess) WriterConnected() bool {
 	return kp.Writer != nil
 }
@@ -49,7 +63,6 @@ func (kp *KafkaProcess) CloseWriter() {
 	}
 }
 
-// ConnectReader sets up a Kafka reader.
 func (kp *KafkaProcess) ConnectReader() {
 	kp.Reader = kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{kp.BrokerAddress},
@@ -70,10 +83,9 @@ func (kp *KafkaProcess) CloseReader() {
 }
 
 func (kp *KafkaProcess) ReaderConnected() bool {
-	return kp.Writer != nil
+	return kp.Reader != nil
 }
 
-// Close closes the Kafka writer and reader.
 func (kp *KafkaProcess) Close() {
 	if kp.Writer != nil {
 		kp.CloseWriter()
