@@ -46,11 +46,11 @@ func main() {
 	defer close(channel)
 
 	//Blockchain
-	serverBlockchain := blockchain.New("localhost", 7990, channel)
+	serverBlockchain := blockchain.New("0.0.0.0", 7990, channel)
 	wg.Add(1)
 	go serverBlockchain.Run()
 
-	err := serverBlockchain.Connect("localhost", 7878)
+	err := serverBlockchain.Connect("172.17.0.2", 7878)
 	if err != nil {
 		fmt.Printf("Coudn't connect to server: %v\n", err)
 	}
