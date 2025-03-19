@@ -57,6 +57,8 @@ func main() {
 
 	p2pProtocol := serverBlockchain.GetProtocol()
 
+	fmt.Println("Hello world")
+
 	// go sendTransactions(p2pProtocol, newTransaction)
 
 	// if err != nil {
