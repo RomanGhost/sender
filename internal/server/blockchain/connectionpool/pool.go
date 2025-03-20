@@ -4,101 +4,240 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sender/internal/server/blockchain/connectionpool/message"
+	"sender/internal/server/blockchain/connectionpool/peer"
+	"sender/internal/server/blockchain/protocol"
+	"strings"
 	"sync"
+	"time"
 )
 
+// ConnectionPool manages all peer connections
 type ConnectionPool struct {
-	mu         sync.Mutex
-	peers      map[string]net.Conn
-	bufferSize int
+	connections map[string]*peer.PeerConnection
+	mutex       sync.RWMutex
+	timeout     time.Duration
+
+	// Channels for pool communication
+	poolChan chan message.PoolMessage
+
+	// Channel for communication with the protocol
+	protocolChan chan<- protocol.Message
 }
 
-func New(bufferSize int) *ConnectionPool {
+// NewConnectionPool creates a new connection pool
+func NewConnectionPool(timeoutSecs int64, protocolChan chan<- protocol.Message) *ConnectionPool {
 	return &ConnectionPool{
-		peers:      make(map[string]net.Conn),
-		bufferSize: bufferSize,
+		connections:  make(map[string]*peer.PeerConnection),
+		timeout:      time.Duration(timeoutSecs) * time.Second,
+		poolChan:     make(chan message.PoolMessage, 100),
+		protocolChan: protocolChan,
 	}
 }
 
-// AddPeer добавляет нового пира в пул.
-func (cp *ConnectionPool) AddPeer(address string, conn net.Conn) {
-	cp.mu.Lock()
-	defer cp.mu.Unlock()
-
-	cp.peers[address] = conn
-	log.Printf("Added peer: %s\n", address)
+// GetPoolChan returns the channel for sending messages to the pool
+func (cp *ConnectionPool) GetPoolChan() chan<- message.PoolMessage {
+	return cp.poolChan
 }
 
-// RemovePeer удаляет пира из пула.
-func (cp *ConnectionPool) RemovePeer(address string) {
-	cp.mu.Lock()
-	defer cp.mu.Unlock()
+// addConnection adds a new peer connection to the pool
+func (cp *ConnectionPool) addConnection(addr net.Addr, conn *peer.ProtectedConnection) {
+	addrStr := addr.String()
 
-	delete(cp.peers, address)
-	log.Printf("Removed peer: %s\n", address)
-}
+	cp.mutex.Lock()
+	defer cp.mutex.Unlock()
 
-// GetAlivePeers возвращает список активных соединений.
-func (cp *ConnectionPool) GetAlivePeers() []net.Conn {
-	cp.mu.Lock()
-	defer cp.mu.Unlock()
-
-	peers := make([]net.Conn, 0, len(cp.peers))
-	for _, conn := range cp.peers {
-		peers = append(peers, conn)
+	cp.connections[addrStr] = &peer.PeerConnection{
+		Addr:     addr,
+		Conn:     conn,
+		LastSeen: time.Now(),
+		Buffer:   "",
 	}
-	return peers
+
+	log.Printf("New peer connected: %s, total peers: %d", addrStr, len(cp.connections))
 }
 
-// GetPeerAddresses возвращает список адресов подключенных пиров.
-func (cp *ConnectionPool) GetPeerAddresses() []string {
-	cp.mu.Lock()
-	defer cp.mu.Unlock()
+// removeConnection removes a peer connection from the pool
+func (cp *ConnectionPool) removeConnection(addr net.Addr) {
+	addrStr := addr.String()
 
-	addresses := make([]string, 0, len(cp.peers))
-	for addr := range cp.peers {
-		addresses = append(addresses, addr)
+	cp.mutex.Lock()
+	defer cp.mutex.Unlock()
+
+	if _, exists := cp.connections[addrStr]; exists {
+		delete(cp.connections, addrStr)
+		log.Printf("Peer removed: %s", addrStr)
 	}
-	return addresses
 }
 
-// Broadcast отправляет сообщение всем подключенным пирами.
-func (cp *ConnectionPool) Broadcast(message string) {
-	cp.mu.Lock()
+// getPeerAddresses returns a list of all peer addresses
+func (cp *ConnectionPool) getPeerAddresses() []net.Addr {
+	cp.mutex.RLock()
+	defer cp.mutex.RUnlock()
 
-	disconnectedPeers := []string{}
-	bufferSize := cp.bufferSize
+	addrs := make([]net.Addr, 0, len(cp.connections))
+	for _, peer := range cp.connections {
+		addrs = append(addrs, peer.Addr)
+	}
 
-	// Добавляем перенос строки для разделения сообщений.
-	message += "\n"
-	startIndex := 0
+	return addrs
+}
 
-	// Разбиваем сообщение на части в зависимости от размера буфера.
-	for startIndex < len(message) {
-		endIndex := startIndex + bufferSize
-		if endIndex > len(message) {
-			endIndex = len(message)
+// sendToPeer sends a message to a specific peer
+func (cp *ConnectionPool) sendToPeer(addr net.Addr, message string) error {
+	addrStr := addr.String()
+
+	cp.mutex.RLock()
+	peer, exists := cp.connections[addrStr]
+	cp.mutex.RUnlock()
+
+	if !exists {
+		return fmt.Errorf("peer not found: %s", addrStr)
+	}
+
+	peer.Conn.Mutex.Lock()
+	defer peer.Conn.Mutex.Unlock()
+
+	if _, err := fmt.Fprintf(peer.Conn.Conn, "%s\n", message); err != nil {
+		return err
+	}
+
+	peer.LastSeen = time.Now()
+	return nil
+}
+
+// broadcast sends a message to all peers
+func (cp *ConnectionPool) broadcast(message string) {
+	cp.mutex.RLock()
+	peers := make([]*peer.PeerConnection, 0, len(cp.connections))
+	for _, peer := range cp.connections {
+		peers = append(peers, peer)
+	}
+	cp.mutex.RUnlock()
+
+	var failedPeers []net.Addr
+
+	for _, peer := range peers {
+		peer.Conn.Mutex.Lock()
+		_, err := fmt.Fprintf(peer.Conn.Conn, "%s\n", message)
+		peer.Conn.Mutex.Unlock()
+
+		if err != nil {
+			failedPeers = append(failedPeers, peer.Addr)
+		} else {
+			peer.LastSeen = time.Now()
 		}
-		messageChunk := message[startIndex:endIndex]
-		// Отправляем сообщение каждому пиру.
-		for address, conn := range cp.peers {
-			fmt.Printf("send to %v, message: %s", address, messageChunk)
-			if _, err := conn.Write([]byte(messageChunk)); err != nil {
-				log.Printf("Failed to send message to %s: %v\n", address, err)
-				disconnectedPeers = append(disconnectedPeers, address)
+	}
+
+	// Remove failed peers
+	for _, addr := range failedPeers {
+		cp.removeConnection(addr)
+	}
+}
+
+// cleanupInactive removes inactive connections
+func (cp *ConnectionPool) cleanupInactive() {
+	cp.mutex.Lock()
+	defer cp.mutex.Unlock()
+
+	now := time.Now()
+	var inactivePeers []string
+
+	for addrStr, peer := range cp.connections {
+		if now.Sub(peer.LastSeen) > cp.timeout {
+			inactivePeers = append(inactivePeers, addrStr)
+		}
+	}
+
+	for _, addrStr := range inactivePeers {
+		log.Printf("Inactive peer timeout: %s", addrStr)
+		delete(cp.connections, addrStr)
+	}
+}
+
+// Run starts the connection pool message processing
+func (cp *ConnectionPool) Run() {
+	for {
+		select {
+		case msg := <-cp.poolChan:
+			switch msg.Type {
+			case message.NewPeer:
+				cp.addConnection(msg.Addr, msg.Conn)
+
+				// Notify the protocol about the new peer
+				peerMsg := protocol.NewPeerMessage(msg.Addr.(*net.TCPAddr).IP.String())
+				cp.protocolChan <- peerMsg
+
+				// Request initial message info
+				cp.protocolChan <- protocol.NewInfoMessage()
+
+			case message.PeerDisconnected:
+				cp.removeConnection(msg.Addr)
+
+			case message.BroadcastMessage:
+				log.Printf("Broadcasting message: %s", msg.Message)
+				cp.broadcast(msg.Message)
+
+			case message.GetPeers:
+				peers := cp.getPeerAddresses()
+				msg.ResponseChan <- peers
+
+			case message.PeerMessage:
+				cp.handlePeerMessage(msg.Addr, msg.Message)
 			}
-		}
-		startIndex += bufferSize
-	}
-	cp.mu.Unlock()
 
-	// Удаляем отключившихся пиров.
-	for _, address := range disconnectedPeers {
-		cp.RemovePeer(address)
+		case <-time.After(600 * time.Second):
+			log.Printf("Pool cleanup triggered")
+			cp.cleanupInactive()
+		}
 	}
 }
 
-// GetBuffer создает пустой буфер заданного размера.
-func (cp *ConnectionPool) GetBuffer() []byte {
-	return make([]byte, cp.bufferSize)
+// handlePeerMessage processes messages from peers
+func (cp *ConnectionPool) handlePeerMessage(addr net.Addr, message string) {
+	addrStr := addr.String()
+
+	cp.mutex.Lock()
+	peer, exists := cp.connections[addrStr]
+	if !exists {
+		cp.mutex.Unlock()
+		log.Printf("Message from unknown peer: %s", addrStr)
+		return
+	}
+
+	// Append to buffer and process
+	buffer := peer.Buffer + message
+	peer.Buffer = "" // Clear the buffer
+	cp.mutex.Unlock()
+
+	messages := []string{}
+
+	// Split the buffer into messages by newline
+	for {
+		parts := strings.SplitN(buffer, "\n", 2)
+		if len(parts) == 1 {
+			// No more newlines, store the rest in the buffer
+			cp.mutex.Lock()
+			peer.Buffer = parts[0]
+			cp.mutex.Unlock()
+			break
+		}
+
+		// Add the message and continue processing
+		messages = append(messages, parts[0])
+		buffer = parts[1]
+	}
+
+	// Process the messages
+	for _, msg := range messages {
+		// Forward to the protocol
+		cp.protocolChan <- protocol.NewRawMessage([]byte(msg))
+
+		// Update last seen time
+		cp.mutex.Lock()
+		if peer, exists := cp.connections[addrStr]; exists {
+			peer.LastSeen = time.Now()
+		}
+		cp.mutex.Unlock()
+	}
 }

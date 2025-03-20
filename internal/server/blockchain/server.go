@@ -1,174 +1,142 @@
-package blockchain
+package server
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"net"
+	"sender/internal/server/blockchain/connectionPool/message"
+	"sender/internal/server/blockchain/connectionpool/peer"
+	"sync"
 	"time"
-
-	"sender/internal/server/blockchain/connectionpool"
-	"sender/internal/server/blockchain/p2pprotocol"
-	"sender/internal/server/blockchain/p2pprotocol/message"
 )
 
-const HandshakeMessage = "NEW_CONNECT!\r\n"
-const Timeout = 10 //mins
-const BufferSize = 4096
-
-type BlockchainServer struct {
-	Address        string
-	Port           int
-	ConnectionPool *connectionpool.ConnectionPool
-	P2PProtocol    *p2pprotocol.P2PProtocol
+// Server represents the P2P server that listens for incoming connections
+type Server struct {
+	poolChan chan message.PoolMessage
 }
 
-func New(address string, port int, sender chan message.Message) *BlockchainServer {
-	connectionPool := connectionpool.New(BufferSize)
-	p2pProtocol := p2pprotocol.New(connectionPool, sender)
-
-	return &BlockchainServer{
-		Address:        address,
-		Port:           port,
-		ConnectionPool: connectionPool,
-		P2PProtocol:    p2pProtocol,
+// NewServer creates a new P2P server instance
+func NewServer(poolChan chan message.PoolMessage) *Server {
+	return &Server{
+		poolChan: poolChan,
 	}
 }
 
-func (bs *BlockchainServer) GetProtocol() *p2pprotocol.P2PProtocol {
-	return bs.P2PProtocol
-}
-
-func (bs *BlockchainServer) Run() {
-	listenerAddress := fmt.Sprintf("%s:%d", bs.Address, bs.Port)
-	listener, err := net.Listen("tcp", listenerAddress)
-
+// Run starts the server and begins listening for connections
+func (s *Server) Run(address string) error {
+	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		log.Fatalf("Error: %v", err)
-		return
+		return err
 	}
 	defer listener.Close()
 
-	log.Printf("Server started on %s", listenerAddress)
+	log.Printf("P2P server started on %s", address)
 
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Printf("Failed to accept connection: %v", err)
+			log.Printf("Error accepting connection: %v", err)
 			continue
 		}
 
-		go bs.handleConnection(conn)
+		localAddr := conn.LocalAddr().(*net.TCPAddr)
+		remoteAddr := conn.RemoteAddr().(*net.TCPAddr)
+
+		if localAddr.IP.Equal(remoteAddr.IP) && localAddr.Port == remoteAddr.Port {
+			conn.Close()
+			continue
+		}
+
+		// Start a new goroutine for each peer
+		go s.handle(conn)
 	}
 }
 
-func (bs *BlockchainServer) Connect(address string, port int) error {
-	connectionAddress := fmt.Sprintf("%s:%d", address, port)
-	conn, err := net.Dial("tcp", connectionAddress)
+// Connect attempts to connect to a peer at the given address
+func (s *Server) Connect(address string) error {
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
-		return fmt.Errorf("Error connecting to server: %v", err)
+		log.Printf("Error connecting to %s: %v", address, err)
+		return err
 	}
 
-	log.Printf("Connected to %s", connectionAddress)
+	localAddr := conn.LocalAddr().(*net.TCPAddr)
+	remoteAddr := conn.RemoteAddr().(*net.TCPAddr)
 
-	go bs.handleConnection(conn)
+	if localAddr.IP.Equal(remoteAddr.IP) && localAddr.Port == remoteAddr.Port {
+		conn.Close()
+		return fmt.Errorf("attempted to connect to self")
+	}
+
+	// Start a new goroutine for the connection
+	go s.handle(conn)
 	return nil
 }
 
-func (bs *BlockchainServer) handleConnection(conn net.Conn) {
-	defer conn.Close()
+// GetPoolSender returns a channel for sending messages to the connection pool
+func (s *Server) GetPoolSender() chan<- message.PoolMessage {
+	return s.poolChan
+}
 
-	peerAddress := conn.RemoteAddr().String()
-	log.Printf("New connection from %s", peerAddress)
+// handle manages a single connection
+func (s *Server) handle(conn net.Conn) error {
+	addr := conn.RemoteAddr()
+	log.Printf("Started thread for peer %s", addr.String())
 
-	reader := bufio.NewReader(conn)
-	conn.Write([]byte(HandshakeMessage))
+	// Create a mutex-protected connection
+	connMutex := &sync.Mutex{}
+	wrappedConn := peer.NewProtectedConnection(conn, connMutex)
 
-	// Check handshake
-	handshake, err := reader.ReadString('\n')
-	if err != nil {
-		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-			return // Время ожидания истекло
-		} else if err.Error() == "use of closed network connection" {
-			log.Printf("Connection closed by peer: %s", peerAddress)
-			bs.ConnectionPool.RemovePeer(peerAddress)
-			return
-		}
-		log.Printf("Failed to read handshake from %s: %v", peerAddress, err)
-		return
+	// Notify the pool about the new peer
+	s.poolChan <- message.PoolMessage{
+		Type: message.NewPeer,
+		Addr: addr,
+		Conn: wrappedConn,
 	}
 
-	if handshake != HandshakeMessage {
-		log.Printf("Unauthorized client from %s, message: %v == %v", peerAddress, []byte(handshake), []byte(HandshakeMessage))
-		conn.Write([]byte("Unauthorized\n"))
-		return
-	}
-	// p2p_protocol.lock().unwrap().request_first_message();
+	// Set read timeout
+	conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 
-	log.Printf("Authorized client connected from %s", peerAddress)
-	bs.ConnectionPool.AddPeer(peerAddress, conn)
-
-	time.Sleep(1 * time.Second)
-	bs.P2PProtocol.RequestInfoMessage()
-	bs.P2PProtocol.ResponcePeerMessage()
-
-	// Initialize last message time
-	lastMessageTime := time.Now()
-
-	buffer := make([]byte, BufferSize)
-	var accumulatedData string
+	buffer := make([]byte, 1024)
 	for {
-		// Check for timeout
-		if time.Since(lastMessageTime) > Timeout*time.Minute {
-			log.Printf("Client %s inactive for %v minutes, disconnecting", peerAddress, Timeout)
-			bs.ConnectionPool.RemovePeer(peerAddress)
-			break
-		}
-
-		// Set read deadline for inactivity check
-		conn.SetReadDeadline(time.Now().Add(Timeout * time.Second))
-
+		// Read data from the peer
+		connMutex.Lock()
 		n, err := conn.Read(buffer)
+		connMutex.Unlock()
+
 		if err != nil {
 			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-				continue // Ignore timeouts
-			}
-			log.Printf("Error reading from %s: %v", peerAddress, err)
-			bs.ConnectionPool.RemovePeer(peerAddress)
-			break
-		}
-
-		lastMessageTime = time.Now()
-		accumulatedData += string(buffer[:n])
-
-		// Process messages
-		for {
-			message, remainingData := extractMessage(accumulatedData)
-			if message == "" {
+				// Timeout occurred, reset the deadline and continue
+				conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
+				time.Sleep(100 * time.Millisecond)
+				continue
+			} else if err.Error() == "EOF" {
+				// Connection closed
+				log.Printf("Peer %s disconnected", addr.String())
+				break
+			} else {
+				// Other error
+				log.Printf("Error reading from peer %s: %v", addr.String(), err)
 				break
 			}
-			accumulatedData = remainingData
-			log.Printf("Received message from %s: %s", peerAddress, message)
-			// message proccessing
-			bs.P2PProtocol.HandleMessage(message)
+		}
+
+		if n > 0 {
+			message_json := string(buffer[:n])
+			// Send the message to the pool
+			s.poolChan <- message.PoolMessage{
+				Type:    message.PeerMessage,
+				Addr:    addr,
+				Message: message_json,
+			}
 		}
 	}
-}
 
-// Extracts a message from a string of data, separated by '\n'
-func extractMessage(data string) (string, string) {
-	if index := findNewlineIndex(data); index != -1 {
-		return data[:index], data[index+1:]
+	// Notify the pool about the disconnected peer
+	s.poolChan <- message.PoolMessage{
+		Type: message.PeerDisconnected,
+		Addr: addr,
 	}
-	return "", data
-}
 
-// Finds the index of the newline character in the string
-func findNewlineIndex(data string) int {
-	for i, c := range data {
-		if c == '\n' {
-			return i
-		}
-	}
-	return -1
+	return nil
 }

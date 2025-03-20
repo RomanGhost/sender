@@ -8,7 +8,6 @@ import (
 	"sender/internal/data/blockchain/wallet"
 	"sender/internal/data/deal"
 	"sender/internal/process"
-	"sender/internal/server/blockchain"
 	"sender/internal/server/blockchain/p2pprotocol"
 	"sender/internal/server/blockchain/p2pprotocol/message"
 	"sender/internal/server/web"
