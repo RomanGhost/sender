@@ -91,18 +91,7 @@ func (p *P2PProtocol) processMessage(msg message.Message) {
 	// Update the last message ID
 	p.lastMessageID = msg.Content.GetID()
 
-	// Broadcast the message to all peers
-	msgJSON, err := json.Marshal(msg)
-	if err != nil {
-		log.Printf("Failed to marshal message: %v", err)
-		return
-	}
-
-	p.poolChan <- poolMessage.PoolMessage{
-		Type:    poolMessage.BroadcastMessage,
-		Message: string(msgJSON),
-	}
-
+	isUnknown := false
 	// Process the message based on its type
 	switch msg.Type {
 	case message.ResponseBlockMessage:
@@ -119,6 +108,21 @@ func (p *P2PProtocol) processMessage(msg message.Message) {
 
 	default:
 		log.Printf("Unknown message type: %s", msg.Type)
+		isUnknown = true
+	}
+
+	if !isUnknown {
+		// Broadcast the message to all peers
+		msgJSON, err := json.Marshal(msg)
+		if err != nil {
+			log.Printf("Failed to marshal message: %v", err)
+			return
+		}
+
+		p.poolChan <- poolMessage.PoolMessage{
+			Type:    poolMessage.BroadcastMessage,
+			Message: string(msgJSON),
+		}
 	}
 }
 

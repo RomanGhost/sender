@@ -58,7 +58,8 @@ func MessageFromJson(messageJson []byte) (*Message, error) {
 	}
 
 	if err := json.Unmarshal(body.Content, &messageRes); err != nil {
-		log.Printf("Failed to parse message %v: %v", body.Type, err)
+		log.Printf("Failed to parse message %s: %v", body.Type, err)
+		log.Fatalf("Message json: %s ", body.Content)
 		return nil, err
 	}
 
@@ -125,7 +126,7 @@ func NewPeerMessage(ipAddr string) Message {
 	}
 
 	return Message{
-		Type:    ResponseTextMessage,
+		Type:    ResponsePeerMessage,
 		Content: &peerMessage,
 	}
 }

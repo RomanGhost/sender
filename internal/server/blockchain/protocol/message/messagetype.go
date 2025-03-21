@@ -5,7 +5,8 @@ type MessageType string
 const (
 	RawMessageType MessageType = "RawMessage"
 
-	RequestMessageInfo         MessageType = "RequestMessageInfo"
+	RequestMessageInfo MessageType = "RequestMessageInfo"
+
 	ResponseMessageInfo        MessageType = "ResponseMessageInfo"
 	ResponseTransactionMessage MessageType = "ResponseTransactionMessage"
 	ResponseBlockMessage       MessageType = "ResponseBlockMessage"

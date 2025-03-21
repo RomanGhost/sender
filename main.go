@@ -111,5 +111,7 @@ func main() {
 	wg.Add(1)
 	go web_server.Run()
 
+	server.Connect("localhost:7879")
+
 	wg.Wait()
 }
