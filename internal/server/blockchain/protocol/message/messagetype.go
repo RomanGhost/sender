@@ -1,9 +1,9 @@
-package protocol
+package message
 
 type MessageType string
 
 const (
-	RawMessage MessageType = "RawMessage"
+	RawMessageType MessageType = "RawMessage"
 
 	RequestMessageInfo         MessageType = "RequestMessageInfo"
 	ResponseMessageInfo        MessageType = "ResponseMessageInfo"

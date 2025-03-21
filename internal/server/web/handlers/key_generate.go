@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"sender/internal/data/blockchain/wallet"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Keys struct {
@@ -11,8 +12,7 @@ type Keys struct {
 	PrivateKey string `json:"privateKey"`
 }
 
-func KeysGenerateHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+func KeysGenerateHandler(c *gin.Context) {
 	newWallet := wallet.New()
 	walletSerialize := newWallet.Sereliaze()
 
@@ -24,7 +24,5 @@ func KeysGenerateHandler(w http.ResponseWriter, r *http.Request) {
 		PrivateKey: privateKey,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(jsonKeys)
-
+	c.JSON(http.StatusOK, jsonKeys)
 }

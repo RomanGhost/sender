@@ -6,7 +6,7 @@ import (
 	"net"
 	"sender/internal/server/blockchain/connectionpool/message"
 	"sender/internal/server/blockchain/connectionpool/peer"
-	"sender/internal/server/blockchain/protocol"
+	protocolmessage "sender/internal/server/blockchain/protocol/message"
 	"strings"
 	"sync"
 	"time"
@@ -22,15 +22,15 @@ type ConnectionPool struct {
 	poolChan chan message.PoolMessage
 
 	// Channel for communication with the protocol
-	protocolChan chan<- protocol.Message
+	protocolChan chan<- protocolmessage.Message
 }
 
 // NewConnectionPool creates a new connection pool
-func NewConnectionPool(timeoutSecs int64, protocolChan chan<- protocol.Message) *ConnectionPool {
+func NewConnectionPool(poolChan chan message.PoolMessage, timeoutSecs int64, protocolChan chan<- protocolmessage.Message) *ConnectionPool {
 	return &ConnectionPool{
 		connections:  make(map[string]*peer.PeerConnection),
 		timeout:      time.Duration(timeoutSecs) * time.Second,
-		poolChan:     make(chan message.PoolMessage, 100),
+		poolChan:     poolChan, //make(chan message.PoolMessage, 100),
 		protocolChan: protocolChan,
 	}
 }
@@ -165,11 +165,11 @@ func (cp *ConnectionPool) Run() {
 				cp.addConnection(msg.Addr, msg.Conn)
 
 				// Notify the protocol about the new peer
-				peerMsg := protocol.NewPeerMessage(msg.Addr.(*net.TCPAddr).IP.String())
+				peerMsg := protocolmessage.NewPeerMessage(msg.Addr.(*net.TCPAddr).IP.String())
 				cp.protocolChan <- peerMsg
 
 				// Request initial message info
-				cp.protocolChan <- protocol.NewInfoMessage()
+				cp.protocolChan <- protocolmessage.NewInfoMessage()
 
 			case message.PeerDisconnected:
 				cp.removeConnection(msg.Addr)
@@ -231,7 +231,7 @@ func (cp *ConnectionPool) handlePeerMessage(addr net.Addr, message string) {
 	// Process the messages
 	for _, msg := range messages {
 		// Forward to the protocol
-		cp.protocolChan <- protocol.NewRawMessage([]byte(msg))
+		cp.protocolChan <- protocolmessage.NewRawMessage([]byte(msg))
 
 		// Update last seen time
 		cp.mutex.Lock()

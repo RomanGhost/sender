@@ -12,7 +12,7 @@ import (
 // P2PProtocol manages the P2P communication protocol
 type P2PProtocol struct {
 	// Channels for protocol communication
-	messageChan chan Message
+	messageChan chan message.Message
 
 	// Channel for communication with the connection pool
 	poolChan chan<- poolMessage.PoolMessage
@@ -22,9 +22,9 @@ type P2PProtocol struct {
 }
 
 // NewP2PProtocol creates a new P2P protocol instance
-func NewP2PProtocol(appState *app.AppState, poolChan chan<- poolMessage.PoolMessage) *P2PProtocol {
+func NewProtocol(messageChan chan message.Message, appState *app.AppState, poolChan chan<- poolMessage.PoolMessage) *P2PProtocol {
 	return &P2PProtocol{
-		messageChan:   make(chan Message, 100),
+		messageChan:   messageChan, //make(chan message.Message, 100),
 		poolChan:      poolChan,
 		lastMessageID: 0,
 		appState:      appState,
@@ -32,7 +32,7 @@ func NewP2PProtocol(appState *app.AppState, poolChan chan<- poolMessage.PoolMess
 }
 
 // GetMessageChan returns the channel for sending messages to the protocol
-func (p *P2PProtocol) GetMessageChan() chan<- Message {
+func (p *P2PProtocol) GetMessageChan() chan<- message.Message {
 	return p.messageChan
 }
 
@@ -42,9 +42,9 @@ func (p *P2PProtocol) Run() {
 		select {
 		case msg := <-p.messageChan:
 			switch msg.Type {
-			case RawMessage:
+			case message.RawMessageType:
 				rawMsgJson := msg.Content.(*message.RawMessage).MessageJson
-				msg_from_json, err := MessageFromJson(rawMsgJson)
+				msg_from_json, err := message.MessageFromJson(rawMsgJson)
 				if err != nil {
 					log.Printf("Error with message")
 					return
@@ -64,15 +64,15 @@ func (p *P2PProtocol) Run() {
 }
 
 // processMessage handles incoming messages from peers
-func (p *P2PProtocol) processMessage(msg Message) {
+func (p *P2PProtocol) processMessage(msg message.Message) {
 	// Check if we've already seen this message
-	if msg.Type == RequestMessageInfo {
+	if msg.Type == message.RequestMessageInfo {
 		log.Printf("Type:RequestMessageInfo received")
 		p.sendFirstMessage()
 		return
 	}
 
-	if msg.Type == ResponseMessageInfo {
+	if msg.Type == message.ResponseMessageInfo {
 		log.Printf("Type:ResponseMessageInfo received")
 
 		if p.lastMessageID < msg.Content.GetID() {
@@ -105,15 +105,15 @@ func (p *P2PProtocol) processMessage(msg Message) {
 
 	// Process the message based on its type
 	switch msg.Type {
-	case ResponseBlockMessage:
+	case message.ResponseBlockMessage:
 		blockMessage := msg.Content.(*message.BlockMessage)
 		p.processBlock(blockMessage)
 
-	case ResponsePeerMessage:
+	case message.ResponsePeerMessage:
 		peerMsg := msg.Content.(*message.PeerMessage)
 		p.processPeer(peerMsg)
 
-	case ResponseTextMessage:
+	case message.ResponseTextMessage:
 		textMsg := msg.Content.(*message.TextMessage).Message
 		log.Printf("Received text message: %s", textMsg)
 
@@ -123,7 +123,7 @@ func (p *P2PProtocol) processMessage(msg Message) {
 }
 
 // sendMessage sends a message to all peers
-func (p *P2PProtocol) sendMessage(msg Message) {
+func (p *P2PProtocol) sendMessage(msg message.Message) {
 	p.lastMessageID++
 	msg.Content.SetID(p.lastMessageID)
 
@@ -141,7 +141,7 @@ func (p *P2PProtocol) sendMessage(msg Message) {
 
 // processBlock processes a block message
 func (p *P2PProtocol) processBlock(msg *message.BlockMessage) {
-	p.appState.ReadBlock(msg.Block)
+	p.appState.ReadBlock(msg)
 }
 
 // processPeer processes a peer message
@@ -155,7 +155,7 @@ func (p *P2PProtocol) processPeer(msg *message.PeerMessage) {
 // sendFirstMessage sends the initial message after connecting to a peer
 func (p *P2PProtocol) sendFirstMessage() {
 	p.lastMessageID++
-	responseMsg := NewInfoMessage()
+	responseMsg := message.NewInfoMessage()
 	responseMsg.Content.SetID(p.lastMessageID)
 
 	msgJSON, err := json.Marshal(responseMsg)

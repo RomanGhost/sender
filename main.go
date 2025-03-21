@@ -4,20 +4,25 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sender/internal/app"
 	"sender/internal/data/blockchain/transaction"
 	"sender/internal/data/blockchain/wallet"
 	"sender/internal/data/deal"
 	"sender/internal/process"
-	"sender/internal/server/blockchain/p2pprotocol"
-	"sender/internal/server/blockchain/p2pprotocol/message"
+	"sender/internal/server/blockchain"
+	"sender/internal/server/blockchain/connectionpool"
+	messagePool "sender/internal/server/blockchain/connectionpool/message"
+	"sender/internal/server/blockchain/protocol"
+	messageProtocol "sender/internal/server/blockchain/protocol/message"
 	"sender/internal/server/web"
 	"sync"
 )
 
-func readKafkaMessage(kafka_process *process.KafkaProcess, p2pProtocol *p2pprotocol.P2PProtocol, wallet *wallet.Wallet) {
-	kafka_process.ConnectReader()
-	defer kafka_process.CloseReader()
+func readFromKafkaMessage(kafkaConsumer *process.KafkaProcess, appState *app.AppState, wallet *wallet.Wallet) {
+	kafkaConsumer.ConnectReader()
+	defer kafkaConsumer.CloseReader()
 
+	// функция для отправки транзакции
 	handleMessage := func(msg string) {
 		log.Printf("Processing message from kafka: %s", msg)
 
@@ -30,54 +35,76 @@ func readKafkaMessage(kafka_process *process.KafkaProcess, p2pProtocol *p2pproto
 		newTransaction, _ := transaction.New(wallet, newDeal)
 		newTransaction.Sign()
 
-		p2pProtocol.ResponseTransactionMessage(newTransaction)
+		appState.SendTransaction(newTransaction)
 	}
 
-	err := kafka_process.ReadMessages(context.Background(), handleMessage)
+	err := kafkaConsumer.ReadMessages(context.Background(), handleMessage)
 	if err != nil {
 		log.Fatal("Error of reading", err)
 	}
 }
 
-func main() {
-	var wg sync.WaitGroup
-	channel := make(chan message.Message)
-	defer close(channel)
+func sendToKafkaMessage(kafkaProducer *process.KafkaProcess, kafkaChan chan messageProtocol.MessageInterface) {
+	kafkaProducer.ConnectWriter()
+	defer kafkaProducer.Close()
 
-	//Blockchain
-	serverBlockchain := blockchain.New("0.0.0.0", 7990, channel)
-	wg.Add(1)
-	go serverBlockchain.Run()
+	for messageGet := range kafkaChan {
+		switch msg := messageGet.(type) {
+		case *messageProtocol.BlockMessage:
+			for _, tr := range msg.Block.Transactions {
+				log.Printf("Transaction send to kafka topic: %s", kafkaProducer.GetTopicName())
+				message := tr.DealMessage
+				kafkaProducer.WriteMessage(context.Background(), string(message))
+			}
+		default:
+			fmt.Println("Неизвестный тип сообщения")
+		}
+	}
+}
 
-	err := serverBlockchain.Connect("172.17.0.2", 7878)
-	if err != nil {
-		fmt.Printf("Coudn't connect to server: %v\n", err)
+func initialize() (*blockchain.Server, *connectionpool.ConnectionPool, *protocol.P2PProtocol, *app.AppState) {
+	//initialize chans
+	protocolChan := make(chan messageProtocol.Message, 100)
+	poolChan := make(chan messagePool.PoolMessage, 100)
+
+	// create server and appstate
+	server := blockchain.NewServer(poolChan)
+	pool := connectionpool.NewConnectionPool(poolChan, 60, protocolChan)
+
+	appState := app.AppState{
+		Server:       server,
+		KafkaChan:    make(chan messageProtocol.MessageInterface, 100),
+		ProtocolChan: protocolChan,
 	}
 
-	p2pProtocol := serverBlockchain.GetProtocol()
+	p2pprotocol := protocol.NewProtocol(protocolChan, &appState, poolChan)
 
-	fmt.Println("Hello world")
+	return server, pool, p2pprotocol, &appState
+}
 
-	// go sendTransactions(p2pProtocol, newTransaction)
-
-	// if err != nil {
-	// 	log.Fatalln("Error with topic kafka: ", err)
-	// }
+func main() {
+	var wg sync.WaitGroup
+	// initialize blockchain
+	newWallet := wallet.New()
+	server, pool, p2pprotocol, appState := initialize()
 
 	// Kafka connect
+	kafkaProcessProducer := process.NewKafkaProcess("localhost:9092", "SpringGetDeal", "example-group")
+	kafkaProcessConsumer := process.NewKafkaProcess("localhost:9092", "GoGetDeal", "middle-group")
 
-	kafka_process_producer := process.NewKafkaProcess("localhost:9092", "SpringGetDeal", "example-group")
-	kafka_process_producer.ConnectWriter()
-	defer kafka_process_producer.Close()
-
+	//blockchain kafka
 	wg.Add(1)
-	go process.MessageProcessing(channel, p2pProtocol, kafka_process_producer)
-
-	kafka_process_consumer := process.NewKafkaProcess("localhost:9092", "GoGetDeal", "middle-group")
-	newWallet := wallet.New()
-
+	go p2pprotocol.Run()
 	wg.Add(1)
-	go readKafkaMessage(kafka_process_consumer, p2pProtocol, newWallet)
+	go pool.Run()
+	wg.Add(1)
+	go server.Run("0.0.0.0:7878")
+
+	//kafka run
+	wg.Add(1)
+	go readFromKafkaMessage(kafkaProcessConsumer, appState, newWallet)
+	wg.Add(1)
+	go sendToKafkaMessage(kafkaProcessProducer, appState.KafkaChan)
 
 	// web server setting
 	web_server := web.New("7980")

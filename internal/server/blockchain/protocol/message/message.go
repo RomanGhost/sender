@@ -1,11 +1,10 @@
-package protocol
+package message
 
 import (
 	"encoding/json"
 	"log"
 	"sender/internal/data/blockchain/block"
 	"sender/internal/data/blockchain/transaction"
-	"sender/internal/server/blockchain/protocol/message"
 )
 
 type MessageInterface interface {
@@ -35,26 +34,26 @@ func MessageFromJson(messageJson []byte) (*Message, error) {
 
 	switch body.Type {
 	case RequestMessageInfo:
-		var messageInfo message.InfoMessage
+		var messageInfo InfoMessage
 		messageRes = &messageInfo
 	case ResponseMessageInfo:
-		var messageInfo message.InfoMessage
+		var messageInfo InfoMessage
 		messageRes = &messageInfo
 
 	case ResponseTransactionMessage:
-		var transactionMessage message.TransactionMessage
+		var transactionMessage TransactionMessage
 		messageRes = &transactionMessage
 	case ResponseBlockMessage:
-		var blockMessage message.BlockMessage
+		var blockMessage BlockMessage
 		messageRes = &blockMessage
 	case ResponsePeerMessage:
-		var peerMessage message.PeerMessage
+		var peerMessage PeerMessage
 		messageRes = &peerMessage
 	case ResponseTextMessage:
-		var textMessage message.TextMessage
+		var textMessage TextMessage
 		messageRes = &textMessage
 	default:
-		var baseMessage message.BaseMessage
+		var baseMessage BaseMessage
 		messageRes = &baseMessage
 	}
 
@@ -73,8 +72,8 @@ func MessageFromJson(messageJson []byte) (*Message, error) {
 
 // Only response
 func NewInfoMessage() Message {
-	infoMessage := message.InfoMessage{
-		BaseMessage: *message.NewBaseMessage(),
+	infoMessage := InfoMessage{
+		BaseMessage: *NewBaseMessage(),
 	}
 
 	return Message{
@@ -84,8 +83,8 @@ func NewInfoMessage() Message {
 }
 
 func NewTransactionMessage(transaction *transaction.Transaction) Message {
-	transactionMessage := message.TransactionMessage{
-		BaseMessage: *message.NewBaseMessage(),
+	transactionMessage := TransactionMessage{
+		BaseMessage: *NewBaseMessage(),
 		Transaction: transaction,
 	}
 
@@ -96,8 +95,8 @@ func NewTransactionMessage(transaction *transaction.Transaction) Message {
 }
 
 func NewBlockMessage(block *block.Block) Message {
-	blockMessage := message.BlockMessage{
-		BaseMessage: *message.NewBaseMessage(),
+	blockMessage := BlockMessage{
+		BaseMessage: *NewBaseMessage(),
 		Block:       block,
 	}
 
@@ -108,8 +107,8 @@ func NewBlockMessage(block *block.Block) Message {
 }
 
 func NewTextMessage(text string) Message {
-	textMessage := message.TextMessage{
-		BaseMessage: *message.NewBaseMessage(),
+	textMessage := TextMessage{
+		BaseMessage: *NewBaseMessage(),
 		Message:     text,
 	}
 
@@ -120,8 +119,8 @@ func NewTextMessage(text string) Message {
 }
 
 func NewPeerMessage(ipAddr string) Message {
-	peerMessage := message.PeerMessage{
-		BaseMessage: *message.NewBaseMessage(),
+	peerMessage := PeerMessage{
+		BaseMessage: *NewBaseMessage(),
 		PeerAddrIp:  ipAddr,
 	}
 
@@ -132,13 +131,13 @@ func NewPeerMessage(ipAddr string) Message {
 }
 
 func NewRawMessage(jsonMessage []byte) Message {
-	rawMessage := message.RawMessage{
-		BaseMessage: *message.NewBaseMessage(),
+	rawMessage := RawMessage{
+		BaseMessage: *NewBaseMessage(),
 		MessageJson: jsonMessage,
 	}
 
 	return Message{
-		Type:    ResponseTextMessage,
+		Type:    RawMessageType,
 		Content: &rawMessage,
 	}
 }

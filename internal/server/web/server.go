@@ -2,45 +2,44 @@ package web
 
 import (
 	"log"
-	"net/http"
 	"sender/internal/server/web/handlers"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
 type WebServer struct {
 	Port   string
-	routes *mux.Router
+	router *gin.Engine
 }
 
-// Создание нового веб-сервера
+// Create a new web server
 func New(port string) WebServer {
-	routes := identifyRoutes()
+	router := setupRoutes()
 	return WebServer{
 		Port:   port,
-		routes: routes,
+		router: router,
 	}
 }
 
 func (ws *WebServer) Run() {
-	// Запуск сервера
-	if err := http.ListenAndServe(":"+ws.Port, ws.routes); err != nil {
+	// Start the server
+	if err := ws.router.Run(":" + ws.Port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
-	log.Print("Server run")
+	log.Print("Server running")
 }
 
-func (ws *WebServer) Routes() *mux.Router {
-	return ws.routes
+func (ws *WebServer) Router() *gin.Engine {
+	return ws.router
 }
 
-// Функция для настройки маршрутов
-func identifyRoutes() *mux.Router {
-	router := mux.NewRouter()
+// Function to set up routes
+func setupRoutes() *gin.Engine {
+	router := gin.Default()
 
-	// Регистрация маршрутов
-	router.HandleFunc("/health", handlers.HealthHandler).Methods("GET")
-	router.HandleFunc("/keys/generate", handlers.KeysGenerateHandler).Methods("GET")
+	// Register routes
+	router.GET("/health", handlers.HealthHandler)
+	router.GET("/keys/generate", handlers.KeysGenerateHandler)
 
 	return router
 }

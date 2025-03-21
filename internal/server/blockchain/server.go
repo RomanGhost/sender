@@ -1,10 +1,10 @@
-package server
+package blockchain
 
 import (
 	"fmt"
 	"log"
 	"net"
-	"sender/internal/server/blockchain/connectionPool/message"
+	"sender/internal/server/blockchain/connectionpool/message"
 	"sender/internal/server/blockchain/connectionpool/peer"
 	"sync"
 	"time"
