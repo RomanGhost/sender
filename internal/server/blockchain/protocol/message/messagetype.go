@@ -12,4 +12,5 @@ const (
 	ResponseBlockMessage       MessageType = "ResponseBlockMessage"
 	ResponsePeerMessage        MessageType = "ResponsePeerMessage"
 	ResponseTextMessage        MessageType = "ResponseTextMessage"
+	ResponseChainMessage       MessageType = "ResponseChainMessage"
 )
