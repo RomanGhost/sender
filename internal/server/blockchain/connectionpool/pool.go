@@ -26,8 +26,8 @@ type ConnectionPool struct {
 }
 
 // NewConnectionPool creates a new connection pool
-func NewConnectionPool(poolChan chan message.PoolMessage, timeoutSecs int64, protocolChan chan<- protocolmessage.Message) *ConnectionPool {
-	return &ConnectionPool{
+func NewConnectionPool(poolChan chan message.PoolMessage, timeoutSecs int64, protocolChan chan<- protocolmessage.Message) ConnectionPool {
+	return ConnectionPool{
 		connections:  make(map[string]*peer.PeerConnection),
 		timeout:      time.Duration(timeoutSecs) * time.Second,
 		poolChan:     poolChan, //make(chan message.PoolMessage, 100),

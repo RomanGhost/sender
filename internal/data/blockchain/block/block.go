@@ -3,12 +3,11 @@ package block
 import (
 	"sender/internal/data/blockchain/transaction"
 	"sender/internal/jsonutil"
-	"time"
 )
 
 type Block struct {
 	ID           int                       `json:"id"`
-	TimeCreated  time.Time                 `json:"time_create"`
+	TimeCreated  int64                     `json:"time_create"`
 	Transactions []transaction.Transaction `json:"transactions"`
 	PreviousHash string                    `json:"previous_hash"`
 	Nonce        uint64                    `json:"nonce"`

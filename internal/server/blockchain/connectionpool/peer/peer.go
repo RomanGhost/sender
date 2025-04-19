@@ -13,8 +13,8 @@ type ProtectedConnection struct {
 }
 
 // NewProtectedConnection creates a new protected connection
-func NewProtectedConnection(conn net.Conn, mutex *sync.Mutex) *ProtectedConnection {
-	return &ProtectedConnection{
+func NewProtectedConnection(conn net.Conn, mutex *sync.Mutex) ProtectedConnection {
+	return ProtectedConnection{
 		Conn:  conn,
 		Mutex: mutex,
 	}

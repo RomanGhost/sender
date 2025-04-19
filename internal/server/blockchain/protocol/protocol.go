@@ -22,8 +22,8 @@ type P2PProtocol struct {
 }
 
 // NewP2PProtocol creates a new P2P protocol instance
-func NewProtocol(messageChan chan message.Message, appState *app.AppState, poolChan chan<- poolMessage.PoolMessage) *P2PProtocol {
-	return &P2PProtocol{
+func NewProtocol(messageChan chan message.Message, appState *app.AppState, poolChan chan<- poolMessage.PoolMessage) P2PProtocol {
+	return P2PProtocol{
 		messageChan:   messageChan, //make(chan message.Message, 100),
 		poolChan:      poolChan,
 		lastMessageID: 0,

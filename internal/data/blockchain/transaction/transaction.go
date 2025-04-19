@@ -24,7 +24,7 @@ type Transaction struct {
 }
 
 // New creates a new transaction and initializes it with data
-func New(walletKeys *wallet.Wallet, deal *deal.Deal) (*Transaction, error) {
+func New(walletKeys *wallet.Wallet, deal *deal.Deal) (Transaction, error) {
 	serializeWallet := walletKeys.Sereliaze()
 
 	// Calculate transfer amount
@@ -40,7 +40,7 @@ func New(walletKeys *wallet.Wallet, deal *deal.Deal) (*Transaction, error) {
 		buyer = wallet.New().Sereliaze().PublicKey
 	}
 
-	return &Transaction{
+	return Transaction{
 		Sender:          serializeWallet.PublicKey,
 		DealMessage:     dataString, //deal,
 		SellerPublicKey: seller,

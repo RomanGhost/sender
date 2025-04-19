@@ -16,8 +16,8 @@ type Server struct {
 }
 
 // NewServer creates a new P2P server instance
-func NewServer(poolChan chan message.PoolMessage) *Server {
-	return &Server{
+func NewServer(poolChan chan message.PoolMessage) Server {
+	return Server{
 		poolChan: poolChan,
 	}
 }
@@ -91,7 +91,7 @@ func (s *Server) handle(conn net.Conn) error {
 	s.poolChan <- message.PoolMessage{
 		Type: message.NewPeer,
 		Addr: addr,
-		Conn: wrappedConn,
+		Conn: &wrappedConn,
 	}
 
 	// Set read timeout

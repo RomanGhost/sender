@@ -35,7 +35,7 @@ func readFromKafkaMessage(kafkaConsumer *process.KafkaProcess, appState *app.App
 		newTransaction, _ := transaction.New(wallet, newDeal)
 		newTransaction.Sign()
 
-		appState.SendTransaction(newTransaction)
+		appState.SendTransaction(&newTransaction)
 	}
 
 	err := kafkaConsumer.ReadMessages(context.Background(), handleMessage)
@@ -72,14 +72,14 @@ func initialize() (*blockchain.Server, *connectionpool.ConnectionPool, *protocol
 	pool := connectionpool.NewConnectionPool(poolChan, 60, protocolChan)
 
 	appState := app.AppState{
-		Server:       server,
+		Server:       &server,
 		KafkaChan:    make(chan messageProtocol.MessageInterface, 100),
 		ProtocolChan: protocolChan,
 	}
 
 	p2pprotocol := protocol.NewProtocol(protocolChan, &appState, poolChan)
 
-	return server, pool, p2pprotocol, &appState
+	return &server, &pool, &p2pprotocol, &appState
 }
 
 func main() {

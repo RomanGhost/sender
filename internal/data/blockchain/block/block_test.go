@@ -22,7 +22,7 @@ func generateTestTransaction(amount float64) transaction.Transaction {
 func TestBlock_ToJson(t *testing.T) {
 	block := &block.Block{
 		ID:           1,
-		TimeCreated:  time.Now(),
+		TimeCreated:  time.Now().UTC().Unix(),
 		Transactions: []transaction.Transaction{generateTestTransaction(100)},
 		PreviousHash: "abc123",
 		Nonce:        42,
@@ -52,7 +52,7 @@ func TestBlock_ToJson(t *testing.T) {
 func TestFromJSON(t *testing.T) {
 	blockJson := []byte(`{
 		"id": 1,
-		"time_create": "2023-01-01T12:00:00Z",
+		"time_create": 1745089962,
 		"transactions": [{"sender": "test_sender", "buyer": "test_buyer", "seller": "test_seller", "message": "test_message", "transfer": 100, "signature": "test_signature"}],
 		"previous_hash": "abc123",
 		"nonce": 42
