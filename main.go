@@ -107,11 +107,11 @@ func main() {
 	go sendToKafkaMessage(kafkaProcessProducer, appState.KafkaChan)
 
 	// web server setting
-	web_server := web.New("7980")
+	web_server := web.New("8080")
 	wg.Add(1)
 	go web_server.Run()
 
-	server.Connect("localhost:7879")
+	// server.Connect("localhost:7879")
 
 	wg.Wait()
 }

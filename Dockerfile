@@ -24,7 +24,8 @@ WORKDIR /app
 COPY --from=builder /app/app .
 
 # Открываем порт (если нужно)
-EXPOSE 7990
+EXPOSE 7878
+EXPOSE 8080
 
 # Запускаем приложение
 CMD ["./app"]
