@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"sender/internal/app"
 	"sender/internal/data/blockchain/transaction"
 	"sender/internal/data/blockchain/wallet"
@@ -88,9 +89,15 @@ func main() {
 	newWallet := wallet.New()
 	server, pool, p2pprotocol, appState := initialize()
 
+	kafkaHost, exist := os.LookupEnv("KAFKA_HOST")
+
+	if !exist {
+		kafkaHost = "localhost:9092"
+	}
+
 	// Kafka connect
-	kafkaProcessProducer := process.NewKafkaProcess("localhost:9092", "SpringGetDeal", "example-group")
-	kafkaProcessConsumer := process.NewKafkaProcess("localhost:9092", "GoGetDeal", "middle-group")
+	kafkaProcessProducer := process.NewKafkaProcess(kafkaHost, "SpringGetDeal", "example-group")
+	kafkaProcessConsumer := process.NewKafkaProcess(kafkaHost, "GoGetDeal", "middle-group")
 
 	//blockchain kafka
 	wg.Add(1)
@@ -107,11 +114,14 @@ func main() {
 	go sendToKafkaMessage(kafkaProcessProducer, appState.KafkaChan)
 
 	// web server setting
-	web_server := web.New("7980")
+	web_server := web.New("8080")
 	wg.Add(1)
 	go web_server.Run()
 
-	server.Connect("localhost:7879")
+	blockchainHost, exist := os.LookupEnv("BLOCKCHAIN_HOST")
+	if exist {
+		server.Connect(blockchainHost)
+	}
 
 	wg.Wait()
 }
