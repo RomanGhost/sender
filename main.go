@@ -121,6 +121,8 @@ func main() {
 	blockchainHost, exist := os.LookupEnv("BLOCKCHAIN_HOST")
 	if exist {
 		server.Connect(blockchainHost)
+	} else {
+		server.Connect("localhost:7879")
 	}
 
 	wg.Wait()
